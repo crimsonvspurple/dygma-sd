@@ -1,0 +1,25 @@
+# Rust
+plugin/target/
+**/*.rs.bk
+
+# Built plugin binary (reproduced by install.ps1)
+plugin/**/*.sdPlugin/bin/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+Desktop.ini
+*:Zone.Identifier
+*.Zone.Identifier
+
+# IDE
+.idea/
+**/.idea/
+.vscode/
+*.swp
+*~
+
+# Logs / local env
+*.log
+.env
+.env.*
