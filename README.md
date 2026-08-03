@@ -1,13 +1,103 @@
-# dygma-sd
+# dygma-sd — Dygma Defy battery on Stream Deck
 
-Workspace for a Stream Deck plugin that shows Dygma Defy wireless battery
-levels (Focus serial on Windows).
+Native **Stream Deck plugin** (Rust) that reads wireless battery levels from a Dygma Defy Neuron over Focus serial and shows them on a key.
 
-## Focus battery notes
+| Piece | Tech |
+|-------|------|
+| Focus / battery | [`dygma_focus`](https://crates.io/crates/dygma_focus) |
+| Stream Deck protocol | [`streamdeck-rs`](https://crates.io/crates/streamdeck-rs) |
+| Runtime | Native `.exe` launched by Stream Deck |
 
-See `dygma-defy-battery-instructions.md` for the Focus serial protocol,
-port requirements, and libraries (`dygma_focus`, `dygma-indicator`).
+**Author (plugin):** Eminence · **UUID:** `com.red.eminence.dygma.battery`
 
-## Next
+## Requirements
 
-Build and install the Rust Stream Deck plugin under `plugin/`.
+| Item | Notes |
+|------|--------|
+| Neuron USB | COM port (e.g. **COM4**, `VID_35EF` / `PID_0012`) |
+| Sides | RF to Neuron (not side USB cables) |
+| Bazecor | **Closed** while the plugin owns the serial port |
+| Stream Deck | 6.4+ |
+| Build | Rust (MSVC) + C++ Build Tools / Windows SDK (`link.exe`) |
+
+Bluetooth-only mode (Neuron under left half, no USB) does **not** expose Focus serial.
+
+## Features
+
+- Action **Dygma → Defy Battery**
+- Title: `L100%` / `R40%` (two lines)
+- Auto-poll (default **60 s**, min 15 / max 600 — property inspector)
+- **Key press** forces `wireless.battery.forceRead` + refresh
+- `ERR` / COM alert if the port is busy or the Neuron is missing
+
+## Build & install (Windows)
+
+### One-time: C++ build tools
+
+```powershell
+winget install Microsoft.VisualStudio.BuildTools `
+  --override "--wait --passive --add Microsoft.VisualStudio.Workload.VCTools --includeRecommended"
+```
+
+### Install into Stream Deck
+
+```powershell
+cd plugin
+.\scripts\install.ps1
+```
+
+This generates icons, builds release, copies  
+`com.red.eminence.dygma.battery.sdPlugin` →  
+`%APPDATA%\Elgato\StreamDeck\Plugins\`, and restarts Stream Deck.
+
+Then drag **Defy Battery** from the **Dygma** category onto a key.
+
+### Self-test (no Stream Deck)
+
+```powershell
+cd plugin
+cargo run --release -- --self-test
+```
+
+### Unit tests
+
+```powershell
+cd plugin
+cargo test
+```
+
+## Project layout
+
+```text
+dygma-defy-battery-instructions.md   # Focus API notes
+plugin/
+  Cargo.toml
+  src/
+    main.rs       # entry, --self-test, select! event loop
+    plugin.rs     # state, KeyTitle, SD handlers
+    battery.rs    # dygma_focus wrapper + tests
+    error.rs      # PluginError
+  com.red.eminence.dygma.battery.sdPlugin/
+    manifest.json
+    ui/property-inspector.html
+    imgs/
+  scripts/
+    gen-icons.ps1
+    install.ps1
+```
+
+## Focus protocol (reference)
+
+```
+wireless.battery.forceRead     # then wait ~2s
+wireless.battery.left.level
+wireless.battery.right.level
+```
+
+See `dygma-defy-battery-instructions.md` for details and status-code caveats.
+
+## Caveats
+
+- **One process owns the COM port** — close Bazecor while the plugin is active.
+- Status codes may not match older docs on some firmware (e.g. `0` observed on 2.2.1).
+- Wired charging sides often hide %.

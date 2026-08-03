@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Dygma Battery</title>
+  <style>
+    :root { color-scheme: dark; }
+    body {
+      font-family: system-ui, Segoe UI, sans-serif;
+      font-size: 12px;
+      margin: 12px;
+      color: #e8e8e8;
+      background: #2d2d2d;
+    }
+    label { display: block; margin-bottom: 4px; opacity: 0.9; }
+    input[type="number"] {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 6px 8px;
+      border: 1px solid #555;
+      border-radius: 4px;
+      background: #1e1e1e;
+      color: #fff;
+    }
+    .hint { margin-top: 8px; opacity: 0.7; line-height: 1.4; }
+    .row { margin-bottom: 14px; }
+  </style>
+</head>
+<body>
+  <div class="row">
+    <label for="poll">Poll interval (seconds)</label>
+    <input id="poll" type="number" min="15" max="600" step="5" value="60" />
+  </div>
+  <p class="hint">
+    Neuron must be on USB; sides on RF. Close Bazecor while this plugin owns the serial port.
+    Press the key to force a refresh.
+  </p>
+  <script>
+    // Minimal Stream Deck property inspector: load settings, save on change.
+    // https://docs.elgato.com/streamdeck/sdk/guides/property-inspector
+    let websocket = null;
+    let uuid = null;
+    let actionInfo = null;
+
+    function connectElgatoStreamDeckSocket(inPort, inUUID, inRegisterEvent, inInfo, inActionInfo) {
+      uuid = inUUID;
+      actionInfo = JSON.parse(inActionInfo);
+      websocket = new WebSocket("ws://127.0.0.1:" + inPort);
+
+      websocket.onopen = function () {
+        websocket.send(JSON.stringify({ event: inRegisterEvent, uuid: inUUID }));
+        const settings = (actionInfo && actionInfo.payload && actionInfo.payload.settings) || {};
+        const poll = settings.pollIntervalSecs || 60;
+        document.getElementById("poll").value = poll;
+      };
+
+      websocket.onmessage = function (evt) {
+        const msg = JSON.parse(evt.data);
+        if (msg.event === "didReceiveSettings" && msg.payload && msg.payload.settings) {
+          const poll = msg.payload.settings.pollIntervalSecs || 60;
+          document.getElementById("poll").value = poll;
+        }
+      };
+    }
+
+    function saveSettings() {
+      if (!websocket || websocket.readyState !== 1 || !uuid) return;
+      let poll = parseInt(document.getElementById("poll").value, 10);
+      if (isNaN(poll) || poll < 15) poll = 15;
+      if (poll > 600) poll = 600;
+      websocket.send(JSON.stringify({
+        event: "setSettings",
+        context: uuid,
+        payload: { pollIntervalSecs: poll }
+      }));
+    }
+
+    document.getElementById("poll").addEventListener("change", saveSettings);
+    window.connectElgatoStreamDeckSocket = connectElgatoStreamDeckSocket;
+  </script>
+</body>
+</html>
