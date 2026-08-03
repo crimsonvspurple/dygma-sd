@@ -25,10 +25,12 @@ Bluetooth-only mode (Neuron under left half, no USB) does **not** expose Focus s
 ## Features
 
 - Action **Dygma → Defy Battery**
-- Title: `L100%` / `R40%` (two lines)
-- Auto-poll (default **60 s**, min 15 / max 600 — property inspector)
+- **SVG key art:** two vertical 5-block bars (L left-aligned, R right-aligned), bottom blocks narrower
+- Colors by charge: green (high) → lime → yellow → orange → red (≤20%)
+- Optional **% text** under each bar (property inspector)
+- **Charging bolt** when Focus status is charging (`2`)
+- Auto-poll (default **60 s**, min 15 / max 600)
 - **Key press** forces `wireless.battery.forceRead` + refresh
-- `ERR` / COM alert if the port is busy or the Neuron is missing
 
 ## Build & install (Windows)
 
@@ -76,6 +78,7 @@ plugin/
     main.rs       # entry, --self-test, select! event loop
     plugin.rs     # state, KeyTitle, SD handlers
     battery.rs    # dygma_focus wrapper + tests
+    visual.rs     # SVG key art
     error.rs      # PluginError
   com.red.eminence.dygma.battery.sdPlugin/
     manifest.json

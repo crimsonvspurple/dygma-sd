@@ -2,12 +2,13 @@
 
 use crate::battery::{self, BatteryLevels};
 use crate::error::PluginError;
+use crate::visual;
 use futures::SinkExt;
 use futures::stream::SplitSink;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::time::Duration;
-use streamdeck_rs::{Message, MessageOut, StreamDeckSocket, Target, TitlePayload};
+use streamdeck_rs::{ImagePayload, Message, MessageOut, StreamDeckSocket, Target, TitlePayload};
 use tokio::sync::mpsc;
 use tokio::time::Instant;
 use tracing::{debug, info, warn};
@@ -25,16 +26,24 @@ pub struct ActionSettings {
     /// Poll interval in seconds (clamped to 15..=600).
     #[serde(default = "default_poll_interval_secs")]
     poll_interval_secs: u64,
+    /// Draw L/R percentage under each bar in the SVG.
+    #[serde(default = "default_true")]
+    show_percentage: bool,
 }
 
 fn default_poll_interval_secs() -> u64 {
     DEFAULT_POLL_SECS
 }
 
+fn default_true() -> bool {
+    true
+}
+
 impl Default for ActionSettings {
     fn default() -> Self {
         Self {
             poll_interval_secs: DEFAULT_POLL_SECS,
+            show_percentage: true,
         }
     }
 }
@@ -50,6 +59,10 @@ impl ActionSettings {
     pub fn poll_interval_secs(&self) -> u64 {
         self.poll_interval_secs.clamp(MIN_POLL_SECS, MAX_POLL_SECS)
     }
+
+    pub fn show_percentage(&self) -> bool {
+        self.show_percentage
+    }
 }
 
 /// Empty global / property-inspector message types (unused).
@@ -63,18 +76,18 @@ pub type SdSink = SplitSink<SdSocket, OutMsg>;
 
 /// What the Stream Deck key should display.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum KeyTitle {
+pub enum KeyView {
     Loading,
     Levels(BatteryLevels),
     Error,
 }
 
-impl KeyTitle {
-    pub fn as_title(&self) -> String {
+impl KeyView {
+    fn image_data_uri(&self, show_percentage: bool) -> String {
         match self {
-            Self::Loading => "…".to_string(),
-            Self::Levels(levels) => levels.title(),
-            Self::Error => "ERR\nCOM".to_string(),
+            Self::Loading => visual::loading_image_data_uri(),
+            Self::Levels(levels) => visual::key_image_data_uri(levels, show_percentage),
+            Self::Error => visual::error_image_data_uri(),
         }
     }
 }
@@ -93,7 +106,7 @@ struct ActionInstance {
 /// Owns action instances and the shared key view model.
 pub struct Plugin {
     actions: HashMap<String, ActionInstance>,
-    view: KeyTitle,
+    view: KeyView,
     last_poll: Option<Instant>,
     battery_in_flight: bool,
 }
@@ -102,7 +115,7 @@ impl Plugin {
     pub fn new() -> Self {
         Self {
             actions: HashMap::new(),
-            view: KeyTitle::Loading,
+            view: KeyView::Loading,
             last_poll: None,
             battery_in_flight: false,
         }
@@ -164,7 +177,7 @@ impl Plugin {
                         settings: payload.settings,
                     },
                 );
-                set_title(sink, &context, &self.view.as_title()).await?;
+                self.push_key_visual(sink, &context).await?;
                 self.request_battery(bat_tx, true);
             }
             Message::WillDisappear { context, .. } => {
@@ -173,8 +186,8 @@ impl Plugin {
             }
             Message::KeyDown { context, .. } => {
                 info!(%context, "keyDown → force refresh");
-                self.view = KeyTitle::Loading;
-                set_title(sink, &context, &self.view.as_title()).await?;
+                self.view = KeyView::Loading;
+                self.push_key_visual(sink, &context).await?;
                 self.request_battery(bat_tx, true);
             }
             Message::DidReceiveSettings {
@@ -185,8 +198,10 @@ impl Plugin {
                     info!(
                         %context,
                         poll = inst.settings.poll_interval_secs(),
+                        show_pct = inst.settings.show_percentage(),
                         "settings updated"
                     );
+                    self.push_key_visual(sink, &context).await?;
                 }
             }
             Message::Unknown => {
@@ -219,7 +234,7 @@ impl Plugin {
             }
         }
 
-        self.push_titles(sink).await
+        self.push_all_visuals(sink).await
     }
 
     /// Update view / poll bookkeeping from a battery read (no Stream Deck I/O).
@@ -232,31 +247,58 @@ impl Plugin {
         match outcome.result {
             Ok(levels) => {
                 info!(%levels, force = outcome.force, "battery update");
-                self.view = KeyTitle::Levels(levels);
+                self.view = KeyView::Levels(levels);
                 false
             }
             Err(err) => {
                 warn!(%err, force = outcome.force, "battery read failed");
-                self.view = KeyTitle::Error;
+                self.view = KeyView::Error;
                 true
             }
         }
     }
 
-    async fn push_titles(&self, sink: &mut SdSink) -> Result<(), PluginError> {
-        let title = self.view.as_title();
-        for context in self.actions.keys() {
-            set_title(sink, context, &title).await?;
+    async fn push_all_visuals(&self, sink: &mut SdSink) -> Result<(), PluginError> {
+        let contexts: Vec<String> = self.actions.keys().cloned().collect();
+        for context in contexts {
+            self.push_key_visual(sink, &context).await?;
         }
+        Ok(())
+    }
+
+    async fn push_key_visual(&self, sink: &mut SdSink, context: &str) -> Result<(), PluginError> {
+        let show_pct = self
+            .actions
+            .get(context)
+            .map(|a| a.settings.show_percentage())
+            .unwrap_or(true);
+
+        let image = self.view.image_data_uri(show_pct);
+        set_image(sink, context, &image).await?;
+        // Percent lives in the SVG when enabled; clear Stream Deck title overlay.
+        clear_title(sink, context).await?;
         Ok(())
     }
 }
 
-async fn set_title(sink: &mut SdSink, context: &str, title: &str) -> Result<(), PluginError> {
+async fn set_image(sink: &mut SdSink, context: &str, data_uri: &str) -> Result<(), PluginError> {
+    sink.send(OutMsg::SetImage {
+        context: context.to_string(),
+        payload: ImagePayload {
+            image: Some(data_uri.to_string()),
+            target: Target::Both,
+            state: None,
+        },
+    })
+    .await?;
+    Ok(())
+}
+
+async fn clear_title(sink: &mut SdSink, context: &str) -> Result<(), PluginError> {
     sink.send(OutMsg::SetTitle {
         context: context.to_string(),
         payload: TitlePayload {
-            title: Some(title.to_string()),
+            title: Some(String::new()),
             target: Target::Both,
             state: None,
         },
@@ -279,28 +321,20 @@ mod tests {
     }
 
     fn settings(poll_interval_secs: u64) -> ActionSettings {
-        ActionSettings { poll_interval_secs }
+        ActionSettings {
+            poll_interval_secs,
+            show_percentage: true,
+        }
     }
 
     impl Plugin {
         fn with_action(context: &str, settings: ActionSettings) -> Self {
             let mut plugin = Self::new();
-            plugin.actions.insert(
-                context.to_string(),
-                ActionInstance { settings },
-            );
+            plugin
+                .actions
+                .insert(context.to_string(), ActionInstance { settings });
             plugin
         }
-    }
-
-    #[test]
-    fn key_title_variants() {
-        assert_eq!(KeyTitle::Loading.as_title(), "…");
-        assert_eq!(KeyTitle::Error.as_title(), "ERR\nCOM");
-        assert_eq!(
-            KeyTitle::Levels(levels(100, 40)).as_title(),
-            "L100%\nR40%"
-        );
     }
 
     #[test]
@@ -308,23 +342,23 @@ mod tests {
         assert_eq!(settings(5).poll_interval_secs(), MIN_POLL_SECS);
         assert_eq!(settings(60).poll_interval_secs(), 60);
         assert_eq!(settings(9999).poll_interval_secs(), MAX_POLL_SECS);
-        assert_eq!(
-            settings(30).poll_interval(),
-            Duration::from_secs(30)
-        );
+        assert_eq!(settings(30).poll_interval(), Duration::from_secs(30));
     }
 
     #[test]
     fn action_settings_serde_camel_case_and_default() {
         let parsed: ActionSettings =
-            serde_json::from_str(r#"{"pollIntervalSecs": 45}"#).unwrap();
+            serde_json::from_str(r#"{"pollIntervalSecs": 45, "showPercentage": false}"#).unwrap();
         assert_eq!(parsed.poll_interval_secs(), 45);
+        assert!(!parsed.show_percentage());
 
         let defaults: ActionSettings = serde_json::from_str("{}").unwrap();
         assert_eq!(defaults.poll_interval_secs(), DEFAULT_POLL_SECS);
+        assert!(defaults.show_percentage());
 
         let json = serde_json::to_string(&ActionSettings::default()).unwrap();
         assert!(json.contains("pollIntervalSecs"));
+        assert!(json.contains("showPercentage"));
     }
 
     #[test]
@@ -356,7 +390,7 @@ mod tests {
             force: true,
         });
         assert!(!plugin.should_poll());
-        assert_eq!(plugin.view, KeyTitle::Levels(levels(90, 50)));
+        assert_eq!(plugin.view, KeyView::Levels(levels(90, 50)));
     }
 
     #[test]
@@ -391,7 +425,7 @@ mod tests {
         assert!(!alert);
         assert!(!plugin.battery_in_flight);
         assert!(plugin.last_poll.is_some());
-        assert_eq!(plugin.view.as_title(), "L100%\nR40%");
+        assert_eq!(plugin.view, KeyView::Levels(levels(100, 40)));
     }
 
     #[test]
@@ -404,8 +438,7 @@ mod tests {
         });
         assert!(alert);
         assert!(!plugin.battery_in_flight);
-        assert_eq!(plugin.view, KeyTitle::Error);
-        assert_eq!(plugin.view.as_title(), "ERR\nCOM");
+        assert_eq!(plugin.view, KeyView::Error);
     }
 
     #[tokio::test]
@@ -414,13 +447,10 @@ mod tests {
         let (tx, mut rx) = mpsc::channel::<BatteryOutcome>(4);
         plugin.request_battery(&tx, true);
         assert!(plugin.battery_in_flight);
-        // Second request must be ignored while in-flight (no second task).
         plugin.request_battery(&tx, true);
         assert!(plugin.battery_in_flight);
 
-        // First task still produces one outcome (may fail if no hardware).
         let _ = rx.recv().await;
-        // Drain: ensure we did not get a second spurious send immediately.
         let second = tokio::time::timeout(Duration::from_millis(50), rx.recv()).await;
         assert!(second.is_err() || second.unwrap().is_none());
     }

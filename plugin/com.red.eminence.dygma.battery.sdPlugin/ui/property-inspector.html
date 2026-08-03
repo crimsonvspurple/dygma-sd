@@ -22,6 +22,12 @@
       background: #1e1e1e;
       color: #fff;
     }
+    .check {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .check input { width: auto; }
     .hint { margin-top: 8px; opacity: 0.7; line-height: 1.4; }
     .row { margin-bottom: 14px; }
   </style>
@@ -31,16 +37,25 @@
     <label for="poll">Poll interval (seconds)</label>
     <input id="poll" type="number" min="15" max="600" step="5" value="60" />
   </div>
+  <div class="row check">
+    <input id="showPct" type="checkbox" checked />
+    <label for="showPct" style="margin:0">Show percentage under bars</label>
+  </div>
   <p class="hint">
-    Neuron must be on USB; sides on RF. Close Bazecor while this plugin owns the serial port.
-    Press the key to force a refresh.
+    Two tapered 5-block bars (L / R). Colors go green → yellow → red by charge.
+    A bolt appears when Focus reports charging (status 2). Close Bazecor while this plugin owns COM.
   </p>
   <script>
-    // Minimal Stream Deck property inspector: load settings, save on change.
-    // https://docs.elgato.com/streamdeck/sdk/guides/property-inspector
     let websocket = null;
     let uuid = null;
     let actionInfo = null;
+
+    function applySettings(settings) {
+      settings = settings || {};
+      document.getElementById("poll").value = settings.pollIntervalSecs || 60;
+      document.getElementById("showPct").checked =
+        settings.showPercentage === undefined ? true : !!settings.showPercentage;
+    }
 
     function connectElgatoStreamDeckSocket(inPort, inUUID, inRegisterEvent, inInfo, inActionInfo) {
       uuid = inUUID;
@@ -50,15 +65,13 @@
       websocket.onopen = function () {
         websocket.send(JSON.stringify({ event: inRegisterEvent, uuid: inUUID }));
         const settings = (actionInfo && actionInfo.payload && actionInfo.payload.settings) || {};
-        const poll = settings.pollIntervalSecs || 60;
-        document.getElementById("poll").value = poll;
+        applySettings(settings);
       };
 
       websocket.onmessage = function (evt) {
         const msg = JSON.parse(evt.data);
         if (msg.event === "didReceiveSettings" && msg.payload && msg.payload.settings) {
-          const poll = msg.payload.settings.pollIntervalSecs || 60;
-          document.getElementById("poll").value = poll;
+          applySettings(msg.payload.settings);
         }
       };
     }
@@ -71,11 +84,15 @@
       websocket.send(JSON.stringify({
         event: "setSettings",
         context: uuid,
-        payload: { pollIntervalSecs: poll }
+        payload: {
+          pollIntervalSecs: poll,
+          showPercentage: document.getElementById("showPct").checked
+        }
       }));
     }
 
     document.getElementById("poll").addEventListener("change", saveSettings);
+    document.getElementById("showPct").addEventListener("change", saveSettings);
     window.connectElgatoStreamDeckSocket = connectElgatoStreamDeckSocket;
   </script>
 </body>

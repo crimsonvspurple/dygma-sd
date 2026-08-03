@@ -6,6 +6,7 @@
 mod battery;
 mod error;
 mod plugin;
+mod visual;
 
 use error::PluginError;
 use futures::StreamExt;
