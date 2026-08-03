@@ -29,6 +29,7 @@ Bluetooth-only mode (Neuron under left half, no USB) does **not** expose Focus s
 - Colors by charge: green (high) → lime → yellow → orange → red (≤20%)
 - Optional **% text** under each bar (property inspector)
 - **Charging bolt** when Focus status is charging (`2`)
+- **Device picker** when multiple Neurons are on USB (per-key setting)
 - Auto-poll (default **60 s**, min 15 / max 600)
 - **Key press** forces `wireless.battery.forceRead` + refresh
 

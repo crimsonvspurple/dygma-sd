@@ -1,4 +1,4 @@
-//! Stream Deck plugin: show Dygma Defy wireless battery on a key.
+//! Stream Deck plugin: show Dygma wireless battery on a key.
 //!
 //! Protocol: Elgato WebSocket SDK via `streamdeck-rs`.
 //! Hardware: Neuron Focus serial via `dygma_focus`.
@@ -10,7 +10,7 @@ mod visual;
 
 use error::PluginError;
 use futures::StreamExt;
-use plugin::{BatteryOutcome, Plugin, SdSocket, FORCE_WAIT};
+use plugin::{BatteryOutcome, Plugin, SdSocket};
 use std::env;
 use std::process::ExitCode;
 use std::time::Duration;
@@ -43,8 +43,24 @@ fn main() -> ExitCode {
 }
 
 fn run_self_test() -> ExitCode {
-    info!("self-test: reading battery via dygma_focus");
-    match battery::read_battery(true, FORCE_WAIT) {
+    info!("self-test: enumerating devices + reading battery");
+    match battery::list_devices() {
+        Ok(devs) => {
+            println!("devices ({}):", devs.len());
+            for d in &devs {
+                println!("  {} — {}", d.port, d.label);
+            }
+            if devs.is_empty() {
+                eprintln!("No Dygma Focus devices found.");
+            }
+        }
+        Err(e) => {
+            eprintln!("device list failed: {e}");
+            return ExitCode::FAILURE;
+        }
+    }
+
+    match battery::read_battery(None, true, Duration::from_secs(2)) {
         Ok(levels) => {
             println!("{}", levels.title());
             println!("{levels}");
@@ -52,7 +68,7 @@ fn run_self_test() -> ExitCode {
         }
         Err(e) => {
             eprintln!("battery read failed: {e}");
-            eprintln!("Close Bazecor and ensure Neuron is on USB (COM port available).");
+            eprintln!("Close Bazecor and ensure a Neuron is on USB (COM port available).");
             ExitCode::FAILURE
         }
     }
@@ -100,16 +116,13 @@ async fn run_plugin(socket: SdSocket) -> Result<(), PluginError> {
                 }
             }
             _ = tick.tick() => {
-                if plugin.should_poll() {
-                    plugin.request_battery(&bat_tx, true);
+                for port in plugin.ports_due_for_poll() {
+                    plugin.request_battery_for_port(&bat_tx, port, true);
                 }
             }
             outcome = bat_rx.recv() => {
                 match outcome {
-                    None => {
-                        // All battery senders dropped (unexpected while bat_tx lives).
-                        break;
-                    }
+                    None => break,
                     Some(outcome) => {
                         plugin.on_battery_result(&mut sink, outcome).await?;
                     }
@@ -118,7 +131,6 @@ async fn run_plugin(socket: SdSocket) -> Result<(), PluginError> {
         }
     }
 
-    // Drop senders so any in-flight blocking task cannot leak work after exit.
     drop(bat_tx);
     info!("plugin event loop stopped");
     Ok(())

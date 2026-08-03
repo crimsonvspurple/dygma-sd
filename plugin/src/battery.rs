@@ -1,7 +1,8 @@
-//! Dygma Focus wireless battery helpers.
+//! Dygma Focus wireless battery helpers and device discovery.
 
 use dygma_focus::errors::FocusError;
 use dygma_focus::Focus;
+use std::collections::HashSet;
 use std::fmt;
 use std::thread;
 use std::time::Duration;
@@ -16,7 +17,7 @@ pub struct BatteryLevels {
 }
 
 impl BatteryLevels {
-    /// Title suitable for a Stream Deck key (two lines).
+    /// Title suitable for logs / fallback text.
     pub fn title(&self) -> String {
         format!("L{}%\nR{}%", self.left, self.right)
     }
@@ -39,11 +40,62 @@ fn status_label(status: Option<u8>) -> String {
     status.map_or_else(|| "?".to_string(), |s| s.to_string())
 }
 
+/// A discovered Neuron / Dygma Focus serial device.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct FocusDevice {
+    /// OS serial port name (e.g. `COM4`).
+    pub port: String,
+    /// Human label for the property inspector.
+    pub label: String,
+    pub display_name: String,
+    pub wireless: bool,
+}
+
+/// List supported Dygma Focus devices currently on USB (deduped by port).
+pub fn list_devices() -> Result<Vec<FocusDevice>, FocusError> {
+    let devices = Focus::find_all_devices()?;
+    let mut seen = HashSet::new();
+    let mut out = Vec::new();
+
+    for d in devices {
+        if !seen.insert(d.serial_port.clone()) {
+            continue;
+        }
+        let display_name = d.hardware.info.display_name.to_string();
+        let wireless = d.hardware.wireless;
+        let kind = if wireless { "wireless" } else { "wired" };
+        let label = format!("{display_name} [{kind}] ({})", d.serial_port);
+        out.push(FocusDevice {
+            port: d.serial_port,
+            label,
+            display_name,
+            wireless,
+        });
+    }
+
+    out.sort_by(|a, b| a.port.cmp(&b.port));
+    Ok(out)
+}
+
+/// Open Focus: explicit port if non-empty, otherwise first available.
+pub fn open_focus(port: Option<&str>) -> Result<Focus, FocusError> {
+    match port.map(str::trim).filter(|p| !p.is_empty()) {
+        Some(p) => Focus::new_via_port(p),
+        None => Focus::new_first_available(),
+    }
+}
+
 /// Open Focus, optionally force-read, query L/R levels (+ status), close.
 ///
-/// Bazecor (or any other Focus client) must not hold the COM port.
-pub fn read_battery(force: bool, force_wait: Duration) -> Result<BatteryLevels, FocusError> {
-    let mut focus = Focus::new_first_available()?;
+/// `port`: `None` / empty → first available device.
+///
+/// Bazecor (or any other Focus client) must not hold the serial port.
+pub fn read_battery(
+    port: Option<&str>,
+    force: bool,
+    force_wait: Duration,
+) -> Result<BatteryLevels, FocusError> {
+    let mut focus = open_focus(port)?;
 
     if force {
         // force_read writes the command but does not consume the serial
@@ -131,5 +183,11 @@ mod tests {
         let b = a.clone();
         assert_eq!(a, b);
         assert_ne!(a, sample(11, 20));
+    }
+
+    #[test]
+    fn list_devices_does_not_panic() {
+        // Hardware may or may not be present; just ensure enumeration is safe.
+        let _ = list_devices();
     }
 }

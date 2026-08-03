@@ -13,7 +13,7 @@
       background: #2d2d2d;
     }
     label { display: block; margin-bottom: 4px; opacity: 0.9; }
-    input[type="number"] {
+    input[type="number"], select {
       width: 100%;
       box-sizing: border-box;
       padding: 6px 8px;
@@ -30,9 +30,28 @@
     .check input { width: auto; }
     .hint { margin-top: 8px; opacity: 0.7; line-height: 1.4; }
     .row { margin-bottom: 14px; }
+    .device-row { display: none; }
+    .device-row.visible { display: block; }
+    button {
+      margin-top: 6px;
+      padding: 6px 10px;
+      border: 1px solid #555;
+      border-radius: 4px;
+      background: #333;
+      color: #fff;
+      cursor: pointer;
+    }
+    button:hover { background: #444; }
   </style>
 </head>
 <body>
+  <div class="row device-row" id="deviceRow">
+    <label for="device">Dygma device</label>
+    <select id="device">
+      <option value="">Auto (first available)</option>
+    </select>
+    <button type="button" id="refreshDevices">Refresh devices</button>
+  </div>
   <div class="row">
     <label for="poll">Poll interval (seconds)</label>
     <input id="poll" type="number" min="15" max="600" step="5" value="60" />
@@ -41,20 +60,64 @@
     <input id="showPct" type="checkbox" checked />
     <label for="showPct" style="margin:0">Show percentage under bars</label>
   </div>
-  <p class="hint">
-    Two tapered 5-block bars (L / R). Colors go green → yellow → red by charge.
-    A bolt appears when Focus reports charging (status 2). Close Bazecor while this plugin owns COM.
+  <p class="hint" id="hint">
+    Neuron USB + RF sides. Close Bazecor while this plugin owns the COM port.
+    Device picker appears when more than one Dygma Focus device is found.
   </p>
   <script>
     let websocket = null;
     let uuid = null;
     let actionInfo = null;
+    let selectedPort = "";
 
     function applySettings(settings) {
       settings = settings || {};
       document.getElementById("poll").value = settings.pollIntervalSecs || 60;
       document.getElementById("showPct").checked =
         settings.showPercentage === undefined ? true : !!settings.showPercentage;
+      selectedPort = settings.devicePort || "";
+      const sel = document.getElementById("device");
+      if ([...sel.options].some(o => o.value === selectedPort)) {
+        sel.value = selectedPort;
+      }
+    }
+
+    function applyDeviceList(payload) {
+      const devices = payload.devices || [];
+      const selected = payload.selected || "";
+      selectedPort = selected;
+      const sel = document.getElementById("device");
+      sel.innerHTML = "";
+      const auto = document.createElement("option");
+      auto.value = "";
+      auto.textContent = "Auto (first available)";
+      sel.appendChild(auto);
+      for (const d of devices) {
+        const opt = document.createElement("option");
+        opt.value = d.port;
+        opt.textContent = d.label;
+        sel.appendChild(opt);
+      }
+      if ([...sel.options].some(o => o.value === selectedPort)) {
+        sel.value = selectedPort;
+      } else {
+        sel.value = "";
+      }
+      const row = document.getElementById("deviceRow");
+      // Show picker when 2+ devices, or when a non-auto selection is already saved.
+      if (devices.length > 1 || selectedPort) {
+        row.classList.add("visible");
+      } else {
+        row.classList.remove("visible");
+      }
+      const hint = document.getElementById("hint");
+      if (devices.length === 0) {
+        hint.textContent = "No Dygma Focus devices found. Connect a Neuron via USB and close Bazecor, then refresh.";
+      } else if (devices.length === 1) {
+        hint.textContent = "One device: " + devices[0].label + ". Close Bazecor while this plugin owns the port.";
+      } else {
+        hint.textContent = devices.length + " devices found. Pick which Neuron this key should monitor.";
+      }
     }
 
     function connectElgatoStreamDeckSocket(inPort, inUUID, inRegisterEvent, inInfo, inActionInfo) {
@@ -66,12 +129,19 @@
         websocket.send(JSON.stringify({ event: inRegisterEvent, uuid: inUUID }));
         const settings = (actionInfo && actionInfo.payload && actionInfo.payload.settings) || {};
         applySettings(settings);
+        // Device list is also pushed on propertyInspectorDidAppear from the plugin.
       };
 
       websocket.onmessage = function (evt) {
         const msg = JSON.parse(evt.data);
         if (msg.event === "didReceiveSettings" && msg.payload && msg.payload.settings) {
           applySettings(msg.payload.settings);
+        }
+        if (msg.event === "sendToPropertyInspector" && msg.payload) {
+          const p = msg.payload;
+          if (p.event === "deviceList") {
+            applyDeviceList(p);
+          }
         }
       };
     }
@@ -81,18 +151,32 @@
       let poll = parseInt(document.getElementById("poll").value, 10);
       if (isNaN(poll) || poll < 15) poll = 15;
       if (poll > 600) poll = 600;
+      const devicePort = document.getElementById("device").value || "";
       websocket.send(JSON.stringify({
         event: "setSettings",
         context: uuid,
         payload: {
           pollIntervalSecs: poll,
-          showPercentage: document.getElementById("showPct").checked
+          showPercentage: document.getElementById("showPct").checked,
+          devicePort: devicePort
         }
+      }));
+    }
+
+    function refreshDevices() {
+      if (!websocket || websocket.readyState !== 1 || !uuid) return;
+      websocket.send(JSON.stringify({
+        event: "sendToPlugin",
+        action: "com.red.eminence.dygma.battery.levels",
+        context: uuid,
+        payload: { event: "refreshDevices" }
       }));
     }
 
     document.getElementById("poll").addEventListener("change", saveSettings);
     document.getElementById("showPct").addEventListener("change", saveSettings);
+    document.getElementById("device").addEventListener("change", saveSettings);
+    document.getElementById("refreshDevices").addEventListener("click", refreshDevices);
     window.connectElgatoStreamDeckSocket = connectElgatoStreamDeckSocket;
   </script>
 </body>

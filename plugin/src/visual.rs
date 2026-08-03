@@ -154,6 +154,7 @@ fn block_width(col_w: f32, index_from_bottom: u8) -> f32 {
     col_w * (min_frac + (max_frac - min_frac) * t)
 }
 
+#[allow(clippy::too_many_arguments)]
 fn draw_bar(
     out: &mut String,
     col_x: f32,
