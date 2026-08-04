@@ -2,6 +2,10 @@
 plugin/target/
 **/*.rs.bk
 
+# Pack / release output
+dist/
+*.streamDeckPlugin
+
 # Built plugin binary (reproduced by install.ps1)
 plugin/**/*.sdPlugin/bin/
 

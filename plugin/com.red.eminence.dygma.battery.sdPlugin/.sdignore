@@ -1,0 +1,6 @@
+# Files to exclude if streamdeck pack is run from a larger tree.
+# Keep the packaged plugin lean.
+**/*.pdb
+**/Thumbs.db
+**/.DS_Store
+**/*:Zone.Identifier

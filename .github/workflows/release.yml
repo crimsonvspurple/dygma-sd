@@ -1,0 +1,112 @@
+# Build Windows plugin and publish a GitHub Release on version tags.
+#
+# Create a release:
+#   git tag v0.1.0
+#   git push origin v0.1.0
+#
+# Or: Actions → Release → Run workflow (optional tag input).
+
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version for packaging (e.g. 0.1.0). Ignored on tag pushes.'
+        required: false
+        default: '0.1.0'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build & release (Windows)
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust (stable MSVC)
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+
+      - name: Setup Node (Stream Deck CLI)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Stream Deck CLI
+        run: npm install -g @elgato/cli@latest
+
+      - name: Resolve version
+        id: ver
+        shell: pwsh
+        run: |
+          if ($env:GITHUB_REF_TYPE -eq 'tag' -and $env:GITHUB_REF_NAME -match '^v') {
+            $v = $env:GITHUB_REF_NAME
+          } elseif ('${{ github.event.inputs.version }}') {
+            $v = '${{ github.event.inputs.version }}'
+            if ($v -notmatch '^v') { $v = "v$v" }
+          } else {
+            $v = 'v0.0.0-dev'
+          }
+          "tag=$v" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "plugin_version=$($v.TrimStart('v'))" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          Write-Host "tag=$v"
+
+      - name: Cargo cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: plugin
+
+      - name: Build & pack
+        shell: pwsh
+        env:
+          PLUGIN_VERSION: ${{ steps.ver.outputs.plugin_version }}
+        run: |
+          .\plugin\scripts\pack.ps1
+          if (-not (Test-Path dist)) { throw 'dist/ missing after pack' }
+          Get-ChildItem dist -Recurse | Format-Table Name, Length
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dygma-sd-plugin
+          path: dist/*
+          if-no-files-found: error
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.ver.outputs.tag }}
+          name: ${{ steps.ver.outputs.tag }}
+          generate_release_notes: true
+          # workflow_dispatch without an existing tag: create the tag from this commit
+          target_commitish: ${{ github.sha }}
+          files: |
+            dist/*.streamDeckPlugin
+            dist/*.zip
+          body: |
+            ## Install
+
+            1. Download **`com.red.eminence.dygma.battery.streamDeckPlugin`** (preferred).
+            2. Double-click to install into Stream Deck.
+            3. Add **Dygma → Defy Battery** to a key.
+            4. **Close Bazecor** while the plugin is reading the Neuron COM port.
+
+            Fallback: download `*.sdPlugin.zip`, extract into  
+            `%APPDATA%\Elgato\StreamDeck\Plugins\`, then restart Stream Deck.
+
+            ## Notes
+
+            - Windows only.
+            - Neuron USB + RF sides required (not pure Bluetooth).
+            - See README for multi-device picker and build-from-source.
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

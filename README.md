@@ -35,16 +35,28 @@ Bluetooth-only (Neuron under left half, no USB) does **not** expose Focus serial
 - Auto-poll (default **60 s**, min 15 / max 600)
 - **Key press** forces `wireless.battery.forceRead` + refresh
 
-## Build & install (Windows)
+## Install (end users)
 
-### One-time: C++ build tools
+### From GitHub Release (recommended)
+
+1. Open the latest [Release](https://github.com/crimsonvspurple/dygma-sd/releases).
+2. Download **`com.red.eminence.dygma.battery.streamDeckPlugin`**.
+3. Double-click to install into Stream Deck.
+4. Add **Dygma → Defy Battery** to a key.
+5. **Close Bazecor** while the plugin owns the Neuron COM port.
+
+Releases are built by GitHub Actions on version tags (`v0.1.0`, …).
+
+### From source (developers)
+
+#### One-time: C++ build tools
 
 ```powershell
 winget install Microsoft.VisualStudio.BuildTools `
   --override "--wait --passive --add Microsoft.VisualStudio.Workload.VCTools --includeRecommended"
 ```
 
-### Install into Stream Deck
+#### Install into Stream Deck
 
 ```powershell
 cd plugin
@@ -55,7 +67,22 @@ This generates icons, builds release, copies
 `com.red.eminence.dygma.battery.sdPlugin` →  
 `%APPDATA%\Elgato\StreamDeck\Plugins\`, and restarts Stream Deck.
 
-Then drag **Defy Battery** from the **Dygma** category onto a key.
+#### Pack a release artifact locally
+
+```powershell
+# Optional: npm i -g @elgato/cli   # for streamdeck pack + validate
+.\plugin\scripts\pack.ps1
+# → dist/*.streamDeckPlugin and dist/*.sdPlugin.zip
+```
+
+#### Publish a GitHub Release via Actions
+
+```powershell
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+Or run the **Release** workflow manually from the Actions tab.
 
 ### Self-test (no Stream Deck)
 
@@ -92,6 +119,9 @@ plugin/
   scripts/
     gen-icons.ps1
     install.ps1
+    pack.ps1          # build + package for GitHub Release
+.github/workflows/
+  release.yml         # tag v* → build → GitHub Release
 ```
 
 ## Focus protocol (reference)
