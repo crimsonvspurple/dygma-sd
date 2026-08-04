@@ -1,6 +1,6 @@
 [package]
 name = "dygma-sd-plugin"
-version = "0.1.0"
+version = "1.2.0"
 edition = "2021"
 description = "Stream Deck plugin: Dygma Defy wireless battery via Focus"
 license = "MIT"
@@ -8,7 +8,9 @@ publish = false
 
 [dependencies]
 base64 = "0.22"
-dygma_focus = "0.5"
+# Fork of dygma_focus: crates.io 0.5.x pulls an unused `windows` crate and does
+# not build on macOS/Linux. See https://github.com/crimsonvspurple/dygma-focus
+dygma_focus = { git = "https://github.com/crimsonvspurple/dygma-focus", rev = "7e70c6a3d9f0860c53fbb6a677e36606913da6cc" }
 futures = "0.3"
 serde = { version = "1", features = ["derive"] }
 streamdeck-rs = { version = "0.8", default-features = false }

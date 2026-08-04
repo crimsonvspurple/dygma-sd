@@ -10,23 +10,33 @@ Works with **wireless split** boards that expose Focus `wireless.battery.*` (ver
 
 | Piece | Tech |
 |-------|------|
-| Focus / battery | [`dygma_focus`](https://crates.io/crates/dygma_focus) |
+| Focus / battery | [`dygma_focus` fork](https://github.com/crimsonvspurple/dygma-focus) (crates.io 0.5.x also builds on Unix; fork drops unused `windows` dep) |
 | Stream Deck protocol | [`streamdeck-rs`](https://crates.io/crates/streamdeck-rs) |
-| Runtime | Native `.exe` launched by Stream Deck |
+| Runtime | Native binary launched by Stream Deck |
 
 **Plugin author:** Eminence · **UUID:** `com.red.eminence.dygma.battery`
 
 > **Disclaimer:** This is an **unofficial** community plugin. It is **not** made by, affiliated with, or endorsed by Dygma Lab SL. It is provided **as-is, with no warranty or guarantee** of any kind. **Use at your own risk.**
 
+## Platforms
+
+| OS | Stream Deck host | Notes |
+|----|------------------|--------|
+| **Windows** | Official Elgato app 6.4+ | Primary target |
+| **macOS** | Official Elgato app 6.4+ | Binary `dygma-sd-plugin-mac` |
+| **Linux** | No official Elgato app | Binary for `--self-test` / community hosts; experimental |
+
+Serial ports: Windows `COM4`, macOS `/dev/cu.usbmodem…`, Linux `/dev/ttyACM0` (add user to `dialout` or use udev).
+
 ## Requirements
 
 | Item | Notes |
 |------|--------|
-| Neuron USB | Focus COM port (e.g. COM4, `VID_35EF` / `PID_0012` on Defy) |
+| Neuron USB | Focus serial (VID `35EF` / Defy PID `0012`) |
 | Sides | RF to Neuron (not side USB cables) |
 | Bazecor | **Closed** while the plugin owns the serial port |
-| Stream Deck | 6.4+ |
-| Build | Rust (MSVC) + C++ Build Tools / Windows SDK (`link.exe`) |
+| Stream Deck | 6.4+ on Windows/macOS |
+| Build | Rust stable; Windows needs MSVC/link; Linux needs `pkg-config` + `libudev-dev` |
 
 Bluetooth-only (Neuron under left half, no USB) does **not** expose Focus serial.
 
@@ -50,59 +60,64 @@ Bluetooth-only (Neuron under left half, no USB) does **not** expose Focus serial
 2. Download **`com.red.eminence.dygma.battery.streamDeckPlugin`**.
 3. Double-click to install into Stream Deck.
 4. Add **Dygma → Defy Battery** to a key.
-5. **Close Bazecor** while the plugin owns the Neuron COM port.
+5. **Close Bazecor** while the plugin owns the Neuron serial port.
 
-Releases are built by GitHub Actions on version tags (`v0.1.0`, …).
+Releases are multi-OS packages built by GitHub Actions on version tags (`v1.2.0`, …).
 
 ### From source (developers)
 
-#### One-time: C++ build tools
+#### Windows
 
 ```powershell
+# One-time: C++ build tools if link.exe is missing
 winget install Microsoft.VisualStudio.BuildTools `
   --override "--wait --passive --add Microsoft.VisualStudio.Workload.VCTools --includeRecommended"
-```
 
-#### Install into Stream Deck
-
-```powershell
 cd plugin
 .\scripts\install.ps1
+# → %APPDATA%\Elgato\StreamDeck\Plugins\com.red.eminence.dygma.battery.sdPlugin
 ```
 
-This generates icons, builds release, copies  
-`com.red.eminence.dygma.battery.sdPlugin` →  
-`%APPDATA%\Elgato\StreamDeck\Plugins\`, and restarts Stream Deck.
-
-#### Pack a release artifact locally
+Local pack (Windows binary only):
 
 ```powershell
-# Optional: npm i -g @elgato/cli   # for streamdeck pack + validate
 .\plugin\scripts\pack.ps1
 # → dist/*.streamDeckPlugin and dist/*.sdPlugin.zip
 ```
 
-#### Publish a GitHub Release via Actions
+#### macOS / Linux
 
-```powershell
-git tag v0.1.0
-git push origin v0.1.0
+```bash
+# Linux: sudo apt-get install -y pkg-config libudev-dev
+cd plugin
+chmod +x scripts/install.sh
+./scripts/install.sh
 ```
 
-Or run the **Release** workflow manually from the Actions tab.
+macOS install path:  
+`~/Library/Application Support/com.elgato.StreamDeck/Plugins/`
+
+#### Publish a GitHub Release via Actions
+
+```bash
+git tag v1.2.0
+git push origin v1.2.0
+```
+
+Builds **Windows + macOS + Linux** binaries, packs one multi-OS `.streamDeckPlugin`.
 
 ### Self-test (no Stream Deck)
 
 Lists Focus devices, then reads battery from the first available Neuron:
 
-```powershell
+```bash
 cd plugin
 cargo run --release -- --self-test
 ```
 
 ### Unit tests
 
-```powershell
+```bash
 cd plugin
 cargo test
 ```
@@ -145,7 +160,8 @@ See `dygma-defy-battery-instructions.md` for details and caveats.
 
 ## Caveats
 
-- **One process owns each COM port** — close Bazecor while the plugin is active.
+- **One process owns each serial port** — close Bazecor while the plugin is active.
+- Focus dependency: [crimsonvspurple/dygma-focus](https://github.com/crimsonvspurple/dygma-focus) (fork of `dygma_focus`; unused `windows` crate removed).
 - Status codes vary by firmware; charging bolt accepts `1` and `2`.
 - Wired charging sides often hide reliable % (hardware fuel-gauge limit).
 - Pure Bluetooth mode is not supported (no Focus serial).

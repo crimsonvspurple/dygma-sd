@@ -2,14 +2,16 @@
   "$schema": "https://schemas.elgato.com/streamdeck/plugins/manifest.json",
   "UUID": "com.red.eminence.dygma.battery",
   "Name": "Dygma Battery",
-  "Version": "0.1.0.0",
+  "Version": "1.2.0.0",
   "Author": "Eminence",
-  "Description": "Shows Dygma Defy (Neuron) wireless battery levels on a Stream Deck key via Focus serial.",
+  "Description": "Shows Dygma wireless battery levels on a Stream Deck key via Focus serial. Unofficial community plugin — not affiliated with Dygma Lab SL. Use at your own risk.",
   "Icon": "imgs/plugin",
   "Category": "Dygma",
   "CategoryIcon": "imgs/category",
-  "CodePath": "bin/dygma-sd-plugin.exe",
+  "CodePath": "bin/dygma-sd-plugin-mac",
   "CodePathWin": "bin/dygma-sd-plugin.exe",
+  "CodePathMac": "bin/dygma-sd-plugin-mac",
+  "CodePathLin": "bin/dygma-sd-plugin-linux",
   "SDKVersion": 2,
   "Software": {
     "MinimumVersion": "6.4"
@@ -18,13 +20,21 @@
     {
       "Platform": "windows",
       "MinimumVersion": "10"
+    },
+    {
+      "Platform": "mac",
+      "MinimumVersion": "10.15"
+    },
+    {
+      "Platform": "linux",
+      "MinimumVersion": "20.04"
     }
   ],
   "Actions": [
     {
       "UUID": "com.red.eminence.dygma.battery.levels",
       "Name": "Defy Battery",
-      "Tooltip": "Left / right wireless battery %. Press to refresh. Close Bazecor while using.",
+      "Tooltip": "Left / right wireless battery %. Press to refresh. Close Bazecor while using. Unofficial plugin.",
       "Icon": "imgs/action",
       "PropertyInspectorPath": "ui/property-inspector.html",
       "Controllers": ["Keypad"],

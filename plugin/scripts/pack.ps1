@@ -96,7 +96,8 @@ if (-not (Test-Path $exe)) { throw "Missing binary: $exe" }
 $binDir = Join-Path $sdPluginDir 'bin'
 New-Item -ItemType Directory -Force -Path $binDir | Out-Null
 Copy-Item -Force $exe (Join-Path $binDir 'dygma-sd-plugin.exe')
-Write-Host "Staged $exe -> bin/"
+Write-Host "Staged $exe -> bin/dygma-sd-plugin.exe"
+Write-Host 'Note: multi-OS release CI also ships bin/dygma-sd-plugin-mac and bin/dygma-sd-plugin-linux.'
 
 # Clean dist
 if (Test-Path $distDir) { Remove-Item -Recurse -Force $distDir }

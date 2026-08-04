@@ -1,10 +1,7 @@
-# Build Windows plugin and publish a GitHub Release on version tags.
+# Multi-OS build + GitHub Release on version tags.
 #
-# Create a release:
-#   git tag v0.1.0
-#   git push origin v0.1.0
-#
-# Or: Actions → Release → Run workflow (optional tag input).
+#   git tag v1.2.0
+#   git push origin v1.2.0
 
 name: Release
 
@@ -15,66 +12,167 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version for packaging (e.g. 0.1.0). Ignored on tag pushes.'
+        description: 'Version for packaging (e.g. 1.2.0). Ignored on tag pushes.'
         required: false
-        default: '0.1.0'
+        default: '1.2.0'
 
 permissions:
   contents: write
 
 jobs:
-  release:
-    name: Build & release (Windows)
-    runs-on: windows-latest
-
+  build:
+    name: Build (${{ matrix.name }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: windows
+            os: windows-latest
+            binary: dygma-sd-plugin.exe
+            artifact: binary-windows
+          - name: macos
+            os: macos-latest
+            binary: dygma-sd-plugin
+            artifact: binary-macos
+          - name: linux
+            os: ubuntu-latest
+            binary: dygma-sd-plugin
+            artifact: binary-linux
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install Rust (stable MSVC)
+      - name: Install Rust (stable)
         uses: dtolnay/rust-toolchain@stable
-        with:
-          toolchain: stable
 
-      - name: Setup Node (Stream Deck CLI)
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Install Stream Deck CLI
-        run: npm install -g @elgato/cli@latest
-
-      - name: Resolve version
-        id: ver
-        shell: pwsh
-        run: |
-          if ($env:GITHUB_REF_TYPE -eq 'tag' -and $env:GITHUB_REF_NAME -match '^v') {
-            $v = $env:GITHUB_REF_NAME
-          } elseif ('${{ github.event.inputs.version }}') {
-            $v = '${{ github.event.inputs.version }}'
-            if ($v -notmatch '^v') { $v = "v$v" }
-          } else {
-            $v = 'v0.0.0-dev'
-          }
-          "tag=$v" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
-          "plugin_version=$($v.TrimStart('v'))" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
-          Write-Host "tag=$v"
+      - name: Linux serial build deps
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y pkg-config libudev-dev
 
       - name: Cargo cache
         uses: Swatinem/rust-cache@v2
         with:
           workspaces: plugin
+          key: ${{ matrix.name }}
 
-      - name: Build & pack
-        shell: pwsh
-        env:
-          PLUGIN_VERSION: ${{ steps.ver.outputs.plugin_version }}
+      - name: Test
+        working-directory: plugin
+        run: cargo test --release
+
+      - name: Build release
+        working-directory: plugin
+        run: cargo build --release
+
+      - name: Stage binary
+        shell: bash
         run: |
-          .\plugin\scripts\pack.ps1
-          if (-not (Test-Path dist)) { throw 'dist/ missing after pack' }
-          Get-ChildItem dist -Recurse | Format-Table Name, Length
+          set -euo pipefail
+          mkdir -p dist-bin
+          SRC="plugin/target/release/${{ matrix.binary }}"
+          if [[ ! -f "$SRC" ]]; then
+            # Windows may produce .exe; unix has no extension
+            if [[ -f "plugin/target/release/dygma-sd-plugin" ]]; then
+              SRC="plugin/target/release/dygma-sd-plugin"
+            elif [[ -f "plugin/target/release/dygma-sd-plugin.exe" ]]; then
+              SRC="plugin/target/release/dygma-sd-plugin.exe"
+            else
+              echo "Missing release binary" >&2
+              ls -la plugin/target/release/ || true
+              exit 1
+            fi
+          fi
+          cp "$SRC" "dist-bin/${{ matrix.binary }}"
+          chmod +x "dist-bin/${{ matrix.binary }}" || true
+          ls -la dist-bin/
 
-      - name: Upload artifacts
+      - name: Upload binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: dist-bin/*
+          if-no-files-found: error
+
+  package:
+    name: Package & release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve version
+        id: ver
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${GITHUB_REF_TYPE:-}" == "tag" && "${GITHUB_REF_NAME:-}" == v* ]]; then
+            v="${GITHUB_REF_NAME}"
+          elif [[ -n "${{ github.event.inputs.version }}" ]]; then
+            v="${{ github.event.inputs.version }}"
+            [[ "$v" == v* ]] || v="v$v"
+          else
+            v="v0.0.0-dev"
+          fi
+          bare="${v#v}"
+          # Stream Deck wants up to 4 numeric segments
+          IFS='.' read -r a b c d <<< "${bare}.0.0.0"
+          plugin_version="${a}.${b}.${c:-0}.${d:-0}"
+          echo "tag=$v" >> "$GITHUB_OUTPUT"
+          echo "plugin_version=$plugin_version" >> "$GITHUB_OUTPUT"
+          echo "tag=$v plugin_version=$plugin_version"
+
+      - name: Download binaries
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Assemble multi-OS plugin
+        shell: bash
+        run: |
+          set -euo pipefail
+          SD="plugin/com.red.eminence.dygma.battery.sdPlugin"
+          BIN="$SD/bin"
+          mkdir -p "$BIN"
+          cp artifacts/binary-windows/dygma-sd-plugin.exe "$BIN/"
+          cp artifacts/binary-macos/dygma-sd-plugin "$BIN/dygma-sd-plugin-mac"
+          cp artifacts/binary-linux/dygma-sd-plugin "$BIN/dygma-sd-plugin-linux"
+          chmod +x "$BIN/dygma-sd-plugin-mac" "$BIN/dygma-sd-plugin-linux"
+
+          VER="${{ steps.ver.outputs.plugin_version }}"
+          python3 - <<PY
+          import json, pathlib
+          p = pathlib.Path("plugin/com.red.eminence.dygma.battery.sdPlugin/manifest.json")
+          m = json.loads(p.read_text(encoding="utf-8"))
+          m["Version"] = "$VER"
+          m["CodePath"] = "bin/dygma-sd-plugin-mac"
+          m["CodePathWin"] = "bin/dygma-sd-plugin.exe"
+          m["CodePathMac"] = "bin/dygma-sd-plugin-mac"
+          m["CodePathLin"] = "bin/dygma-sd-plugin-linux"
+          m["OS"] = [
+            {"Platform": "windows", "MinimumVersion": "10"},
+            {"Platform": "mac", "MinimumVersion": "10.15"},
+            {"Platform": "linux", "MinimumVersion": "20.04"},
+          ]
+          p.write_text(json.dumps(m, indent=2) + "\n", encoding="utf-8")
+          print(p.read_text())
+          PY
+          ls -la "$BIN"
+
+      - name: Pack zip artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          SD_NAME="com.red.eminence.dygma.battery.sdPlugin"
+          SD_PATH="plugin/$SD_NAME"
+          # .sdPlugin.zip (folder at zip root)
+          (cd plugin && zip -r "../dist/${SD_NAME}.zip" "$SD_NAME" -x '*/bin/.gitkeep')
+          # .streamDeckPlugin is a zip of the folder (Elgato install format)
+          (cd plugin && zip -r "../dist/com.red.eminence.dygma.battery.streamDeckPlugin" "$SD_NAME")
+          ls -la dist/
+
+      - name: Upload package artifacts
         uses: actions/upload-artifact@v4
         with:
           name: dygma-sd-plugin
@@ -87,7 +185,6 @@ jobs:
           tag_name: ${{ steps.ver.outputs.tag }}
           name: ${{ steps.ver.outputs.tag }}
           generate_release_notes: true
-          # workflow_dispatch without an existing tag: create the tag from this commit
           target_commitish: ${{ github.sha }}
           files: |
             dist/*.streamDeckPlugin
@@ -96,17 +193,30 @@ jobs:
             ## Install
 
             1. Download **`com.red.eminence.dygma.battery.streamDeckPlugin`** (preferred).
-            2. Double-click to install into Stream Deck.
+            2. Double-click to install into Stream Deck (Windows / macOS).
             3. Add **Dygma → Defy Battery** to a key.
-            4. **Close Bazecor** while the plugin is reading the Neuron COM port.
+            4. **Close Bazecor** while the plugin owns the Neuron serial port.
 
-            Fallback: download `*.sdPlugin.zip`, extract into  
-            `%APPDATA%\Elgato\StreamDeck\Plugins\`, then restart Stream Deck.
+            Fallback: download `*.sdPlugin.zip` and extract into the Stream Deck Plugins folder:
+
+            | OS | Plugins folder |
+            |----|----------------|
+            | Windows | `%APPDATA%\Elgato\StreamDeck\Plugins\` |
+            | macOS | `~/Library/Application Support/com.elgato.StreamDeck/Plugins/` |
+            | Linux | Community hosts only (no official Elgato app); binary included for experiments / `--self-test` |
+
+            ## Platforms
+
+            Multi-OS package (Windows + macOS + Linux binaries).
+
+            - **Windows / macOS:** official Stream Deck software 6.4+.
+            - **Linux:** no official Elgato Stream Deck app; use the native binary for Focus/`--self-test`, or a third-party host that loads Elgato-style plugins.
 
             ## Notes
 
-            - Windows only.
             - Neuron USB + RF sides required (not pure Bluetooth).
+            - Unofficial community plugin — not affiliated with Dygma Lab SL. No warranty; use at your own risk.
             - See README for multi-device picker and build-from-source.
+            - Focus API: [crimsonvspurple/dygma-focus](https://github.com/crimsonvspurple/dygma-focus) (fork; crates.io 0.5.x does not build on Unix).
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -68,7 +68,7 @@ fn run_self_test() -> ExitCode {
         }
         Err(e) => {
             eprintln!("battery read failed: {e}");
-            eprintln!("Close Bazecor and ensure a Neuron is on USB (COM port available).");
+            eprintln!("Close Bazecor and ensure a Neuron is on USB (serial port available).");
             ExitCode::FAILURE
         }
     }

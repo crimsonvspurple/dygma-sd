@@ -77,7 +77,7 @@
     <label for="showPct" style="margin:0">Show percentage under bars</label>
   </div>
   <p class="hint" id="hint">
-    Neuron USB + RF sides. Close Bazecor while this plugin owns the COM port.
+    Neuron USB + RF sides. Close Bazecor while this plugin owns the serial port.
     Device picker appears when more than one Dygma Focus device is found.
   </p>
   <script>
@@ -130,7 +130,7 @@
       if (devices.length === 0) {
         hint.textContent = "No Dygma Focus devices found. Connect a Neuron via USB and close Bazecor, then refresh.";
       } else if (devices.length === 1) {
-        hint.textContent = "One device: " + devices[0].label + ". Close Bazecor while this plugin owns the port.";
+        hint.textContent = "One device: " + devices[0].label + ". Close Bazecor while this plugin owns the serial port.";
       } else {
         hint.textContent = devices.length + " devices found. Pick which Neuron this key should monitor.";
       }
