@@ -38,9 +38,13 @@ pub fn color_for_blocks(blocks: u8) -> &'static str {
     }
 }
 
-/// Focus status: 2 = charging (Bazecor / Focus API table).
+/// Whether Focus status indicates charging for that side.
+///
+/// Older Focus docs list `2 = charging`, `1 = discharging`. On Defy FW 2.2.1
+/// we observe `0` on RF battery and `1` while a side is on charge, so both
+/// `1` and `2` are treated as charging.
 pub fn is_charging(status: Option<u8>) -> bool {
-    matches!(status, Some(2))
+    matches!(status, Some(1) | Some(2))
 }
 
 /// Build a `data:image/svg+xml;base64,...` URI for Stream Deck `setImage`.
@@ -188,17 +192,16 @@ fn draw_bar(
     }
 
     if charging {
-        // Thunderbolt above the column center
+        // Thunderbolt above the column center (bright so it reads on dark key)
         let cx = col_x + col_w / 2.0;
-        let cy = top - 7.0;
-        draw_bolt(out, cx, cy, fill);
+        let cy = top - 6.5;
+        draw_bolt(out, cx, cy, "#fde047");
     }
 }
 
 fn draw_bolt(out: &mut String, cx: f32, cy: f32, color: &str) {
     // Compact lightning bolt path centered at (cx, cy)
-    let s = 0.55_f32;
-    // Path relative to center
+    let s = 0.72_f32;
     let points = [
         (2.0, -7.0),
         (-3.5, 0.5),
@@ -207,7 +210,10 @@ fn draw_bolt(out: &mut String, cx: f32, cy: f32, color: &str) {
         (3.5, -0.2),
         (0.8, -0.2),
     ];
-    out.push_str(&format!(r##"<path fill="{}" d="M"##, color));
+    out.push_str(&format!(
+        r##"<path fill="{}" stroke="#1a1a1e" stroke-width="0.4" d="M"##,
+        color
+    ));
     for (i, (px, py)) in points.iter().enumerate() {
         let x = cx + px * s;
         let y = cy + py * s;
@@ -252,8 +258,8 @@ mod tests {
     fn charging_status() {
         assert!(!is_charging(None));
         assert!(!is_charging(Some(0)));
-        assert!(!is_charging(Some(1)));
-        assert!(is_charging(Some(2)));
+        assert!(is_charging(Some(1))); // observed on Defy FW 2.2.1 while charging
+        assert!(is_charging(Some(2))); // Focus docs / other firmware
         assert!(!is_charging(Some(3)));
     }
 
