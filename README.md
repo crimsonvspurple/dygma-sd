@@ -2,6 +2,10 @@
 
 Native **Stream Deck plugin** (Rust) that reads wireless battery levels from a Dygma Neuron over Focus serial and shows them on a key.
 
+<p align="center">
+  <img src="docs/preview.svg" alt="Stream Deck key previews: dual battery bars with charge colors, optional %, and charging bolts" width="720" />
+</p>
+
 Works with **wireless split** boards that expose Focus `wireless.battery.*` (verified on **Defy**; expected on **Raise 2** wireless). Pure Bluetooth mode is **not** supported (no Focus serial without Neuron USB).
 
 | Piece | Tech |
@@ -11,6 +15,8 @@ Works with **wireless split** boards that expose Focus `wireless.battery.*` (ver
 | Runtime | Native `.exe` launched by Stream Deck |
 
 **Plugin author:** Eminence · **UUID:** `com.red.eminence.dygma.battery`
+
+> **Disclaimer:** This is an **unofficial** community plugin. It is **not** made by, affiliated with, or endorsed by Dygma Lab SL. It is provided **as-is, with no warranty or guarantee** of any kind. **Use at your own risk.**
 
 ## Requirements
 
@@ -29,6 +35,7 @@ Bluetooth-only (Neuron under left half, no USB) does **not** expose Focus serial
 - Action **Dygma → Defy Battery**
 - **SVG key art:** two vertical 5-block bars (L left-aligned, R right-aligned; bottom blocks narrower)
 - Colors by charge: green (high) → lime → yellow → orange → red (≤20%)
+- Tiny **Dygma mark** centered at the bottom of the key (between L/R %)
 - Optional **% text** under each bar (property inspector)
 - **Charging bolt** when Focus status is **1 or 2** (Defy FW 2.2.1 uses `1` while charging; older docs list `2`)
 - **Device picker** when multiple Neurons are on USB (per-key setting; auto = first available)
@@ -142,3 +149,11 @@ See `dygma-defy-battery-instructions.md` for details and caveats.
 - Status codes vary by firmware; charging bolt accepts `1` and `2`.
 - Wired charging sides often hide reliable % (hardware fuel-gauge limit).
 - Pure Bluetooth mode is not supported (no Focus serial).
+
+## Disclaimer & trademark
+
+This project is an **unofficial** community plugin. It is **not** an official Dygma product and is **not** made by, affiliated with, or endorsed by Dygma Lab SL (or Elgato / Corsair).
+
+The software is provided **as-is**, **without warranty or guarantee** of any kind — including fitness for a particular purpose, uninterrupted operation, or that it will not interfere with Bazecor, firmware, or hardware. **Use at your own risk.**
+
+The Dygma name and logo mark appear only to identify compatibility with Dygma keyboards.

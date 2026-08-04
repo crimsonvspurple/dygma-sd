@@ -29,6 +29,17 @@
     }
     .check input { width: auto; }
     .hint { margin-top: 8px; opacity: 0.7; line-height: 1.4; }
+    .notice {
+      margin: 0 0 14px;
+      padding: 8px 10px;
+      border: 1px solid #6b4a1a;
+      border-radius: 4px;
+      background: #3a2f1a;
+      color: #f5d59a;
+      line-height: 1.4;
+      font-size: 11px;
+    }
+    .notice strong { color: #ffe0a8; }
     .row { margin-bottom: 14px; }
     .device-row { display: none; }
     .device-row.visible { display: block; }
@@ -45,6 +56,11 @@
   </style>
 </head>
 <body>
+  <p class="notice">
+    <strong>Unofficial plugin.</strong>
+    Not made by or affiliated with Dygma Lab SL.
+    No warranty — use at your own risk.
+  </p>
   <div class="row device-row" id="deviceRow">
     <label for="device">Dygma device</label>
     <select id="device">

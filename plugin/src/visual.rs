@@ -54,19 +54,25 @@ pub fn key_image_data_uri(levels: &BatteryLevels, show_percentage: bool) -> Stri
 }
 
 pub fn loading_image_data_uri() -> String {
-    let svg = r##"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72">
-  <rect width="72" height="72" fill="#1a1a1e"/>
-  <text x="36" y="40" text-anchor="middle" fill="#a1a1aa" font-family="Segoe UI,system-ui,sans-serif" font-size="18" font-weight="600">…</text>
-</svg>"##;
+    let mut svg = String::from(
+        r##"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72"><rect width="72" height="72" rx="8" fill="#141418"/>"##,
+    );
+    draw_dygma_logo(&mut svg, 36.0, 30.0, 28.0);
+    svg.push_str(
+        r##"<text x="36" y="58" text-anchor="middle" fill="#a1a1aa" font-family="Segoe UI,system-ui,sans-serif" font-size="12" font-weight="600">…</text></svg>"##,
+    );
     format!("data:image/svg+xml;base64,{}", B64.encode(svg.as_bytes()))
 }
 
 pub fn error_image_data_uri() -> String {
-    let svg = r##"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72">
-  <rect width="72" height="72" fill="#1a1a1e"/>
-  <text x="36" y="32" text-anchor="middle" fill="#f87171" font-family="Segoe UI,system-ui,sans-serif" font-size="14" font-weight="700">ERR</text>
-  <text x="36" y="50" text-anchor="middle" fill="#fca5a5" font-family="Segoe UI,system-ui,sans-serif" font-size="12">COM</text>
-</svg>"##;
+    let mut svg = String::from(
+        r##"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72"><rect width="72" height="72" rx="8" fill="#141418"/>"##,
+    );
+    draw_dygma_logo(&mut svg, 36.0, 26.0, 22.0);
+    svg.push_str(
+        r##"<text x="36" y="50" text-anchor="middle" fill="#f87171" font-family="Segoe UI,system-ui,sans-serif" font-size="11" font-weight="700">ERR</text>
+<text x="36" y="63" text-anchor="middle" fill="#fca5a5" font-family="Segoe UI,system-ui,sans-serif" font-size="10">COM</text></svg>"##,
+    );
     format!("data:image/svg+xml;base64,{}", B64.encode(svg.as_bytes()))
 }
 
@@ -123,6 +129,15 @@ pub fn render_levels_svg(levels: &BatteryLevels, show_percentage: bool) -> Strin
         Align::Right,
         right_charge,
     );
+
+    // Tiny Dygma mark, middle-bottom (sits between L/R % when enabled)
+    let logo_size = if show_percentage { 8.5_f32 } else { 9.5_f32 };
+    let logo_cy = if show_percentage {
+        VIEW - 9.0
+    } else {
+        VIEW - 7.5
+    };
+    draw_dygma_logo(&mut out, VIEW * 0.5, logo_cy, logo_size);
 
     if show_percentage {
         let y = VIEW - 5.0;
@@ -226,6 +241,28 @@ fn draw_bolt(out: &mut String, cx: f32, cy: f32, color: &str) {
     out.push_str(r##" Z"/>"##);
 }
 
+/// Tiny Dygma brand mark (geometry from Bazecor `logo.svg`, viewBox 0 0 56 56).
+/// Drawn as solid brand-color facets so it stays legible at ~8–10 px.
+fn draw_dygma_logo(out: &mut String, cx: f32, cy: f32, size: f32) {
+    let s = size / 56.0;
+    let tx = cx - size * 0.5;
+    let ty = cy - size * 0.5;
+    out.push_str(&format!(
+        r##"<g transform="translate({tx:.2} {ty:.2}) scale({s:.5})" aria-label="Dygma">"##
+    ));
+    // Faceted mark (red → magenta → purple), center stays transparent (key bg).
+    out.push_str(
+        r##"<path fill="#F43F27" d="M42.5 6.8c-0.2 0-0.5 0-0.8 0-0.5 0-1.1 0-1.6 0-3.3 0.1-6.5 0.7-9.5 1.7l10 3.7 2.3 0.9 2.1 0.8-3.5 15.6c-1.4 6.9-3.9 13.4-7.3 19.4l6.5-7.4 2.3-2.6 0.3-0.3 3.4-3.9c0.5-0.6 0.9-1.2 1.1-2l1.2-4 5.9-19.6C51 7.7 46.8 6.9 42.5 6.8z"/>
+<path fill="#E11D48" d="M42.5 6.8c-0.2 0-0.5 0-0.8 0-0.5 0-1.1 0-1.6 0-3.3 0.1-6.5 0.7-9.5 1.7l10 3.7 2.3 0.9 2.1 0.8 9.7-4.6C51 7.7 46.8 6.9 42.5 6.8z"/>
+<path fill="#7C1D6F" d="M9.2 22.8c0.5 0.5 0.9 1.1 1.4 1.6 1.1 1.1 2.2 2.2 3.3 3.2l-1.4-6.1L12 18.9l-1.1-5L28 7.5c3.7-1.3 7.8-2.1 11.9-2.1h0.2c0.7 0 1.5 0 2.2 0.1 1 0.1 2 0.2 2.9 0.3l-3-1.1-2.5-0.9-5.6-2-4.3-1.5c-1.1-0.4-2.4-0.4-3.5 0L21.4 2 5.9 7.5 1.2 9.2C3.1 14.2 5.8 18.8 9.2 22.8z"/>
+<path fill="#4C0783" d="M9.2 22.8c0.5 0.5 0.9 1.1 1.4 1.6 1.1 1.1 2.2 2.2 3.3 3.2l-1.4-6.1L12 18.9l-1.1-5L1.2 9.2C3.1 14.2 5.8 18.8 9.2 22.8z"/>
+<path fill="#A80B2D" d="M33.6 37.5l-2.7 2.3L28 42.1 14.9 31.4c-1.9-1.5-3.6-3.2-5.3-5.1-0.5-0.5-1-1.1-1.4-1.7-1.7-2.2-3.2-4.5-4.5-6.9l2.7 9.1 0.3 1.1 0.9 3.1 0.6 1.9c0.2 0.7 0.6 1.4 1.1 2 0.5 0.5 1.1 1.3 1.9 2.2 0.5 0.6 1.1 1.3 1.7 2 5.7 6.5 14.7 16.8 15 17.1 4.8-6.7 8.5-14.4 10.6-22.6L33.6 37.5z"/>
+<path fill="#8E0939" d="M33.6 37.5l-2.7 2.3L28 42.1v13.9c4.8-6.7 8.5-14.4 10.6-22.6L33.6 37.5z"/>
+"##,
+    );
+    out.push_str("</g>");
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -278,9 +315,13 @@ mod tests {
         assert!(with_pct.contains("#f97316")); // right 2 blocks orange
         // charging bolt on right (status 2)
         assert!(with_pct.contains("<path fill="));
+        // Dygma brand mark present
+        assert!(with_pct.contains("aria-label=\"Dygma\""));
+        assert!(with_pct.contains("#F43F27"));
 
         let no_pct = render_levels_svg(&levels, false);
         assert!(!no_pct.contains("100%"));
+        assert!(no_pct.contains("aria-label=\"Dygma\""));
     }
 
     #[test]
