@@ -14,7 +14,7 @@ Works with **wireless split** boards that expose Focus `wireless.battery.*` (ver
 | Stream Deck protocol | [`streamdeck-rs`](https://crates.io/crates/streamdeck-rs) |
 | Runtime | Native binary launched by Stream Deck |
 
-**Plugin author:** Eminence · **UUID:** `com.red.eminence.dygma.battery`
+**Plugin author:** Eminence · **UUID:** `red.eminence.dygma.battery`
 
 > **Disclaimer:** This is an **unofficial** community plugin. It is **not** made by, affiliated with, or endorsed by Dygma Lab SL. It is provided **as-is, with no warranty or guarantee** of any kind. **Use at your own risk.**
 
@@ -57,7 +57,7 @@ Bluetooth-only (Neuron under left half, no USB) does **not** expose Focus serial
 ### From GitHub Release (recommended)
 
 1. Open the latest [Release](https://github.com/crimsonvspurple/dygma-sd/releases).
-2. Download **`com.red.eminence.dygma.battery.streamDeckPlugin`**.
+2. Download **`red.eminence.dygma.battery.streamDeckPlugin`**.
 3. Double-click to install into Stream Deck.
 4. Add **Dygma → Defy Battery** to a key.
 5. **Close Bazecor** while the plugin owns the Neuron serial port.
@@ -75,7 +75,7 @@ winget install Microsoft.VisualStudio.BuildTools `
 
 cd plugin
 .\scripts\install.ps1
-# → %APPDATA%\Elgato\StreamDeck\Plugins\com.red.eminence.dygma.battery.sdPlugin
+# → %APPDATA%\Elgato\StreamDeck\Plugins\red.eminence.dygma.battery.sdPlugin
 ```
 
 Local pack (Windows binary only):
@@ -134,7 +134,7 @@ plugin/
     battery.rs    # dygma_focus list/read + tests
     visual.rs     # SVG key art
     error.rs      # PluginError
-  com.red.eminence.dygma.battery.sdPlugin/
+  red.eminence.dygma.battery.sdPlugin/
     manifest.json
     ui/property-inspector.html
     imgs/

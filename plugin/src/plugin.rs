@@ -13,7 +13,7 @@ use tokio::sync::mpsc;
 use tokio::time::Instant;
 use tracing::{debug, info, warn};
 
-pub const ACTION_UUID: &str = "com.red.eminence.dygma.battery.levels";
+pub const ACTION_UUID: &str = "red.eminence.dygma.battery.levels";
 pub const DEFAULT_POLL_SECS: u64 = 60;
 pub const MIN_POLL_SECS: u64 = 15;
 pub const MAX_POLL_SECS: u64 = 600;

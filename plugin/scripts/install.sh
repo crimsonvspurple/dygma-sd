@@ -4,7 +4,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PLUGIN_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-SD_NAME="com.red.eminence.dygma.battery.sdPlugin"
+SD_NAME="red.eminence.dygma.battery.sdPlugin"
 SD_DIR="$PLUGIN_ROOT/$SD_NAME"
 
 if [[ "$(uname -s)" == "Darwin" ]]; then

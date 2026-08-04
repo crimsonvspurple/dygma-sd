@@ -183,7 +183,7 @@
       if (!websocket || websocket.readyState !== 1 || !uuid) return;
       websocket.send(JSON.stringify({
         event: "sendToPlugin",
-        action: "com.red.eminence.dygma.battery.levels",
+        action: "red.eminence.dygma.battery.levels",
         context: uuid,
         payload: { event: "refreshDevices" }
       }));

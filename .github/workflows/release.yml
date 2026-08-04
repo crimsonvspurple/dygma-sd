@@ -131,7 +131,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          SD="plugin/com.red.eminence.dygma.battery.sdPlugin"
+          SD="plugin/red.eminence.dygma.battery.sdPlugin"
           BIN="$SD/bin"
           mkdir -p "$BIN"
           cp artifacts/binary-windows/dygma-sd-plugin.exe "$BIN/"
@@ -142,7 +142,7 @@ jobs:
           VER="${{ steps.ver.outputs.plugin_version }}"
           python3 - <<PY
           import json, pathlib
-          p = pathlib.Path("plugin/com.red.eminence.dygma.battery.sdPlugin/manifest.json")
+          p = pathlib.Path("plugin/red.eminence.dygma.battery.sdPlugin/manifest.json")
           m = json.loads(p.read_text(encoding="utf-8"))
           m["Version"] = "$VER"
           m["CodePath"] = "bin/dygma-sd-plugin-mac"
@@ -164,12 +164,12 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p dist
-          SD_NAME="com.red.eminence.dygma.battery.sdPlugin"
+          SD_NAME="red.eminence.dygma.battery.sdPlugin"
           SD_PATH="plugin/$SD_NAME"
           # .sdPlugin.zip (folder at zip root)
           (cd plugin && zip -r "../dist/${SD_NAME}.zip" "$SD_NAME" -x '*/bin/.gitkeep')
           # .streamDeckPlugin is a zip of the folder (Elgato install format)
-          (cd plugin && zip -r "../dist/com.red.eminence.dygma.battery.streamDeckPlugin" "$SD_NAME")
+          (cd plugin && zip -r "../dist/red.eminence.dygma.battery.streamDeckPlugin" "$SD_NAME")
           ls -la dist/
 
       - name: Upload package artifacts
@@ -192,7 +192,7 @@ jobs:
           body: |
             ## Install
 
-            1. Download **`com.red.eminence.dygma.battery.streamDeckPlugin`** (preferred).
+            1. Download **`red.eminence.dygma.battery.streamDeckPlugin`** (preferred).
             2. Double-click to install into Stream Deck (Windows / macOS).
             3. Add **Dygma → Defy Battery** to a key.
             4. **Close Bazecor** while the plugin owns the Neuron serial port.

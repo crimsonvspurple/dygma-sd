@@ -1,8 +1,8 @@
 # Build the Stream Deck plugin and produce installer artifacts under dist/.
 #
 # Outputs (under repo dist/):
-#   com.red.eminence.dygma.battery.streamDeckPlugin  (preferred; via streamdeck CLI)
-#   com.red.eminence.dygma.battery.sdPlugin.zip      (fallback zip of the .sdPlugin folder)
+#   red.eminence.dygma.battery.streamDeckPlugin  (preferred; via streamdeck CLI)
+#   red.eminence.dygma.battery.sdPlugin.zip      (fallback zip of the .sdPlugin folder)
 #
 # Optional env:
 #   PLUGIN_VERSION  e.g. 0.1.0 or 0.1.0.0  (default: read from tag GITHUB_REF_NAME or manifest)
@@ -15,10 +15,10 @@ param(
 $ErrorActionPreference = 'Stop'
 $pluginRoot = Resolve-Path (Join-Path $PSScriptRoot '..')
 $repoRoot = Resolve-Path (Join-Path $pluginRoot '..')
-$sdPluginName = 'com.red.eminence.dygma.battery.sdPlugin'
+$sdPluginName = 'red.eminence.dygma.battery.sdPlugin'
 $sdPluginDir = Join-Path $pluginRoot $sdPluginName
 $distDir = Join-Path $repoRoot 'dist'
-$uuid = 'com.red.eminence.dygma.battery'
+$uuid = 'red.eminence.dygma.battery'
 
 function Find-VcVars64 {
   $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
@@ -147,7 +147,7 @@ Get-ChildItem -Path $pluginRoot, $distDir, $repoRoot -Filter '*.streamDeckPlugin
 # Fallback: rename a zip to .streamDeckPlugin (Elgato installer format is zip-based)
 $sdp = Join-Path $distDir "$uuid.streamDeckPlugin"
 if (-not (Test-Path $sdp)) {
-  # Official pack may produce com.red.eminence.dygma.battery.streamDeckPlugin
+  # Official pack may produce red.eminence.dygma.battery.streamDeckPlugin
   $existing = Get-ChildItem $distDir -Filter '*.streamDeckPlugin' -ErrorAction SilentlyContinue | Select-Object -First 1
   if (-not $existing) {
     Write-Host 'Creating .streamDeckPlugin from sdPlugin folder zip...'

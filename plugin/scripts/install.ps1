@@ -9,7 +9,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $pluginRoot = Resolve-Path (Join-Path $PSScriptRoot '..')
-$sdPluginName = 'com.red.eminence.dygma.battery.sdPlugin'
+$sdPluginName = 'red.eminence.dygma.battery.sdPlugin'
 $srcPlugin = Join-Path $pluginRoot $sdPluginName
 $destRoot = Join-Path $env:APPDATA 'Elgato\StreamDeck\Plugins'
 $dest = Join-Path $destRoot $sdPluginName

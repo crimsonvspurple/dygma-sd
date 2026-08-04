@@ -8,7 +8,7 @@ Add-Type -AssemblyName System.Drawing
 
 $scriptDir = $PSScriptRoot
 $logoPath = Join-Path $scriptDir '..\assets\dygma-logo.png'
-$root = Join-Path $scriptDir '..\com.red.eminence.dygma.battery.sdPlugin\imgs'
+$root = Join-Path $scriptDir '..\red.eminence.dygma.battery.sdPlugin\imgs'
 New-Item -ItemType Directory -Force -Path $root | Out-Null
 
 if (-not (Test-Path $logoPath)) {
