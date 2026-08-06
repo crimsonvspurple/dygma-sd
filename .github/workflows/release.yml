@@ -193,7 +193,7 @@ jobs:
             ## Install
 
             1. Download **`red.eminence.dygma.battery.streamDeckPlugin`** (preferred).
-            2. Double-click to install into Stream Deck (Windows / macOS).
+            2. Double-click to install into Stream Deck (**Windows** primary; **macOS beta**).
             3. Add **Dygma Battery → Dygma Battery** to a key.
             4. **Close Bazecor** while the plugin owns the Neuron serial port.
 
@@ -202,21 +202,23 @@ jobs:
             | OS | Plugins folder |
             |----|----------------|
             | Windows | `%APPDATA%\Elgato\StreamDeck\Plugins\` |
-            | macOS | `~/Library/Application Support/com.elgato.StreamDeck/Plugins/` |
-            | Linux | Community hosts only (no official Elgato app); binary included for experiments / `--self-test` |
+            | macOS (beta) | `~/Library/Application Support/com.elgato.StreamDeck/Plugins/` |
+            | Linux | Community hosts only; binary for experiments / `--self-test` |
 
             ## Platforms
 
             Multi-OS package (Windows + macOS + Linux binaries).
 
-            - **Windows / macOS:** official Stream Deck software 6.4+.
-            - **Linux:** no official Elgato Stream Deck app; use the native binary for Focus/`--self-test`, or a third-party host that loads Elgato-style plugins.
+            - **Windows:** primary / verified (Stream Deck 6.4+).
+            - **macOS:** **beta** (Stream Deck 6.4+).
+            - **Linux:** experimental (no official Elgato app).
+            - **Boards:** **Defy** verified; **Raise 2** and **Sonsei** wireless are **beta**.
 
             ## Notes
 
             - Neuron USB + RF sides required (not pure Bluetooth).
-            - Unofficial community plugin — not affiliated with Dygma Lab SL. No warranty; use at your own risk.
+            - Unofficial community plugin; Dygma logo used with permission. No warranty; use at your own risk.
             - See README for multi-device picker and build-from-source.
-            - Focus API: [crimsonvspurple/dygma-focus](https://github.com/crimsonvspurple/dygma-focus) (fork with unused `windows` dep removed).
+            - Focus API: [crimsonvspurple/dygma-focus](https://github.com/crimsonvspurple/dygma-focus).
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

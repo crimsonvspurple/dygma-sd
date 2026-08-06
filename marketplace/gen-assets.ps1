@@ -156,7 +156,7 @@ $ag.Dispose()
 Save-Png $app (Join-Path $out 'app-icon-288.png')
 $app.Dispose()
 
-$thumb = New-Banner 'Dygma Battery' 'Wireless left / right battery on Stream Deck  ·  Defy · Raise 2 · Sonsei' {
+$thumb = New-Banner 'Dygma Battery' 'Wireless left / right battery on Stream Deck  ·  Defy verified · Raise 2 / Sonsei beta · macOS beta' {
   param($g)
   Draw-KeyArt $g 280 360 4.2 100 40 $true $true $true
   Draw-KeyArt $g 620 360 4.2 72 55 $false $false $true
@@ -215,9 +215,9 @@ $g3 = New-Banner 'Supported boards' 'Any wireless Dygma with Focus wireless.batt
   $white = New-Object System.Drawing.SolidBrush ([System.Drawing.Color]::White)
   $muted = New-Object System.Drawing.SolidBrush ([System.Drawing.Color]::FromArgb(255, 161, 161, 170))
   $boards = @(
-    @{ n = 'Defy'; d = 'Columnar wireless' },
-    @{ n = 'Raise 2'; d = 'Row-staggered wireless' },
-    @{ n = 'Sonsei'; d = 'Low-profile wireless' }
+    @{ n = 'Defy'; d = 'Columnar wireless'; s = 'Verified' },
+    @{ n = 'Raise 2'; d = 'Row-staggered wireless'; s = 'Beta' },
+    @{ n = 'Sonsei'; d = 'Low-profile wireless'; s = 'Beta' }
   )
   $x = 200
   foreach ($b in $boards) {
@@ -225,7 +225,7 @@ $g3 = New-Banner 'Supported boards' 'Any wireless Dygma with Focus wireless.batt
     $g.DrawImage($script:logo, ($x + 40), 400, 90, 90)
     $g.DrawString($b.n, $titleF, $white, ($x + 160), 420)
     $g.DrawString($b.d, $bodyF, $muted, ($x + 160), 480)
-    $g.DrawString('Windows · macOS', $bodyF, $muted, ($x + 160), 540)
+    $g.DrawString("$($b.s)  ·  Windows primary  ·  macOS beta", $bodyF, $muted, ($x + 160), 540)
     $x += 520
   }
   $card.Dispose(); $titleF.Dispose(); $bodyF.Dispose(); $white.Dispose(); $muted.Dispose()

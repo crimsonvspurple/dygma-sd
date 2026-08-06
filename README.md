@@ -6,7 +6,7 @@ Native **Stream Deck plugin** (Rust) that reads wireless battery levels from a D
   <img src="docs/preview.svg" alt="Stream Deck key previews: dual battery bars with charge colors, optional %, and charging bolts" width="720" />
 </p>
 
-Works with **wireless split** boards that expose Focus `wireless.battery.*` — **Defy**, **Raise 2**, and **Sonsei** (Neuron USB + RF sides). Pure Bluetooth mode is **not** supported (no Focus serial without Neuron USB).
+Works with **wireless split** boards that expose Focus `wireless.battery.*` (Neuron USB + RF sides). **Defy** is verified; **Raise 2** and **Sonsei** wireless support is **beta**. Pure Bluetooth mode is **not** supported (no Focus serial without Neuron USB).
 
 | Piece | Tech |
 |-------|------|
@@ -22,9 +22,9 @@ Works with **wireless split** boards that expose Focus `wireless.battery.*` — 
 
 | OS | Stream Deck host | Notes |
 |----|------------------|--------|
-| **Windows** | Official Elgato app 6.4+ | Primary target |
-| **macOS** | Official Elgato app 6.4+ | Binary `dygma-sd-plugin-mac` |
-| **Linux** | No official Elgato app | Binary for `--self-test` / community hosts; experimental |
+| **Windows** | Official Elgato app 6.4+ | Primary / verified |
+| **macOS** | Official Elgato app 6.4+ | **Beta** — binary `dygma-sd-plugin-mac` |
+| **Linux** | No official Elgato app | Experimental binary for `--self-test` / community hosts |
 
 Serial ports: Windows `COM4`, macOS `/dev/cu.usbmodem…`, Linux `/dev/ttyACM0` (add user to `dialout` or use udev).
 
@@ -32,7 +32,7 @@ Serial ports: Windows `COM4`, macOS `/dev/cu.usbmodem…`, Linux `/dev/ttyACM0` 
 
 | Item | Notes |
 |------|--------|
-| Neuron USB | Focus serial (e.g. VID `35EF` on Defy / Raise 2 / Sonsei wireless) |
+| Neuron USB | Focus serial (e.g. VID `35EF`; Defy verified, Raise 2 / Sonsei beta) |
 | Sides | RF to Neuron (not side USB cables) |
 | Bazecor | **Closed** while the plugin owns the serial port |
 | Stream Deck | 6.4+ on Windows/macOS |

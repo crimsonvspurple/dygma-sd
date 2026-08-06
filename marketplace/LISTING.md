@@ -11,14 +11,14 @@ Copy/paste into [Maker Console](https://maker.elgato.com/). Update after each re
 | **Author / organization** | Eminence |
 | **Plugin UUID** | `red.eminence.dygma.battery` (must not change after publish) |
 | **Price** | Free |
-| **OS** | Windows 10+, macOS 10.15+ (plugin also ships a Linux binary for experiments; official Stream Deck app is Win/mac only) |
+| **OS** | Windows 10+ (primary); **macOS 10.15+ beta**; Linux binary experimental only (no official Stream Deck app) |
 | **Stream Deck** | 6.4+ |
 | **Category (in Stream Deck)** | Dygma Battery |
 | **Action** | Dygma Battery |
 
 ## Short description (first ~250 characters — SEO)
 
-Show left and right wireless battery levels from a Dygma Neuron on a Stream Deck key. Works with Defy, Raise 2, and Sonsei wireless when the Neuron is on USB and the halves are on RF. Close Bazecor while the plugin owns the serial port. Unofficial community plugin by Eminence; Dygma logo used with permission.
+Show left and right wireless battery levels from a Dygma Neuron on a Stream Deck key. Verified on Defy; Raise 2 and Sonsei wireless support is beta. Windows is the primary platform; macOS is beta. Neuron USB + RF sides required (not pure Bluetooth). Close Bazecor while the plugin owns the serial port. Unofficial community plugin by Eminence; Dygma logo used with permission.
 
 ## Full description (≤1500 characters)
 
@@ -26,9 +26,9 @@ Show left and right wireless battery levels from a Dygma Neuron on a Stream Deck
 
 **Compatible boards** (Focus `wireless.battery.*` over Neuron USB):
 
-- Dygma **Defy**
-- Dygma **Raise 2** (wireless)
-- Dygma **Sonsei** (wireless)
+- Dygma **Defy** — verified
+- Dygma **Raise 2** (wireless) — **beta**
+- Dygma **Sonsei** (wireless) — **beta**
 
 **Features**
 
@@ -44,7 +44,13 @@ Show left and right wireless battery levels from a Dygma Neuron on a Stream Deck
 - Neuron connected to the PC by **USB** (pure Bluetooth mode is not supported)
 - Keyboard halves linked to the Neuron over **RF** (not side USB cables for battery read)
 - **Bazecor closed** while this plugin uses the serial port
-- Stream Deck software **6.4+** on Windows or macOS
+- Stream Deck software **6.4+** (**Windows** primary; **macOS beta**)
+
+**Platform status**
+
+- **Windows** — primary, best tested
+- **macOS** — **beta**
+- **Raise 2 / Sonsei** wireless — **beta** (same Focus battery APIs as Defy; less field testing)
 
 **Notes**
 
@@ -96,7 +102,7 @@ Prefer the artifact from CI release `v*` after `streamdeck validate` / `pack` on
 - [ ] Listing name/description/media filled
 - [ ] Demo video attached
 - [ ] Upload latest `.streamDeckPlugin`
-- [ ] Confirm Windows + macOS support (accurate)
+- [ ] Confirm OS listing: Windows primary, macOS beta (accurate)
 - [ ] Support / source link: GitHub repo
 - [ ] Optional: uncheck “publish automatically” until you’ve smoke-tested the DRM-processed build
 - [ ] Submit for review (expect **4–10 business days**)
