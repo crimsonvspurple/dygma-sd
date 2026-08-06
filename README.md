@@ -6,7 +6,7 @@ Native **Stream Deck plugin** (Rust) that reads wireless battery levels from a D
   <img src="docs/preview.svg" alt="Stream Deck key previews: dual battery bars with charge colors, optional %, and charging bolts" width="720" />
 </p>
 
-Works with **wireless split** boards that expose Focus `wireless.battery.*` (verified on **Defy**; expected on **Raise 2** wireless). Pure Bluetooth mode is **not** supported (no Focus serial without Neuron USB).
+Works with **wireless split** boards that expose Focus `wireless.battery.*` — **Defy**, **Raise 2**, and **Sonsei** (Neuron USB + RF sides). Pure Bluetooth mode is **not** supported (no Focus serial without Neuron USB).
 
 | Piece | Tech |
 |-------|------|
@@ -16,7 +16,7 @@ Works with **wireless split** boards that expose Focus `wireless.battery.*` (ver
 
 **Plugin author:** Eminence · **UUID:** `red.eminence.dygma.battery`
 
-> **Disclaimer:** This is an **unofficial** community plugin. It is **not** made by, affiliated with, or endorsed by Dygma Lab SL. It is provided **as-is, with no warranty or guarantee** of any kind. **Use at your own risk.**
+> **Disclaimer:** This is an **unofficial** community plugin. It is **not** an official Dygma Lab product. The **Dygma logo is used with permission**. Provided **as-is, with no warranty or guarantee**. **Use at your own risk.**
 
 ## Platforms
 
@@ -32,7 +32,7 @@ Serial ports: Windows `COM4`, macOS `/dev/cu.usbmodem…`, Linux `/dev/ttyACM0` 
 
 | Item | Notes |
 |------|--------|
-| Neuron USB | Focus serial (VID `35EF` / Defy PID `0012`) |
+| Neuron USB | Focus serial (e.g. VID `35EF` on Defy / Raise 2 / Sonsei wireless) |
 | Sides | RF to Neuron (not side USB cables) |
 | Bazecor | **Closed** while the plugin owns the serial port |
 | Stream Deck | 6.4+ on Windows/macOS |
@@ -42,7 +42,7 @@ Bluetooth-only (Neuron under left half, no USB) does **not** expose Focus serial
 
 ## Features
 
-- Action **Dygma → Defy Battery**
+- Action **Dygma Battery → Dygma Battery**
 - **SVG key art:** two vertical 5-block bars (L left-aligned, R right-aligned; bottom blocks narrower)
 - Colors by charge: green (high) → lime → yellow → orange → red (≤20%)
 - Tiny **Dygma mark** centered at the bottom of the key (between L/R %)
@@ -52,6 +52,20 @@ Bluetooth-only (Neuron under left half, no USB) does **not** expose Focus serial
 - Auto-poll (default **60 s**, min 15 / max 600)
 - **Key press** forces `wireless.battery.forceRead` + refresh
 
+## Marketplace
+
+Elgato Marketplace submission materials live in [`marketplace/`](marketplace/):
+
+| Asset | File |
+|-------|------|
+| Listing copy + checklist | [`marketplace/LISTING.md`](marketplace/LISTING.md) |
+| App icon (288×288) | `marketplace/app-icon-288.png` |
+| Thumbnail / galleries | `marketplace/thumbnail-*.png`, `gallery-*.png` |
+
+Regenerate media: `powershell -ExecutionPolicy Bypass -File marketplace/gen-assets.ps1`
+
+Submit via [Maker Console](https://maker.elgato.com/) (org **Eminence**). Demo video of a real Neuron + wireless halves is required for hardware integrations.
+
 ## Install (end users)
 
 ### From GitHub Release (recommended)
@@ -59,7 +73,7 @@ Bluetooth-only (Neuron under left half, no USB) does **not** expose Focus serial
 1. Open the latest [Release](https://github.com/crimsonvspurple/dygma-sd/releases).
 2. Download **`red.eminence.dygma.battery.streamDeckPlugin`**.
 3. Double-click to install into Stream Deck.
-4. Add **Dygma → Defy Battery** to a key.
+4. Add **Dygma Battery → Dygma Battery** to a key.
 5. **Close Bazecor** while the plugin owns the Neuron serial port.
 
 Releases are multi-OS packages built by GitHub Actions on version tags (`v1.2.0`, …).
@@ -168,8 +182,8 @@ See `dygma-defy-battery-instructions.md` for details and caveats.
 
 ## Disclaimer & trademark
 
-This project is an **unofficial** community plugin. It is **not** an official Dygma product and is **not** made by, affiliated with, or endorsed by Dygma Lab SL (or Elgato / Corsair).
+This project is an **unofficial** community plugin. It is **not** an official Dygma Lab product and is **not** made by Elgato / Corsair.
+
+The **Dygma** name and logo are used **with permission from Dygma** to identify compatible keyboards.
 
 The software is provided **as-is**, **without warranty or guarantee** of any kind — including fitness for a particular purpose, uninterrupted operation, or that it will not interfere with Bazecor, firmware, or hardware. **Use at your own risk.**
-
-The Dygma name and logo mark appear only to identify compatibility with Dygma keyboards.

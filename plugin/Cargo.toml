@@ -2,7 +2,7 @@
 name = "dygma-sd-plugin"
 version = "1.3.0"
 edition = "2021"
-description = "Stream Deck plugin: Dygma Defy wireless battery via Focus"
+description = "Stream Deck plugin: Dygma wireless battery (Defy / Raise 2 / Sonsei) via Focus"
 license = "MIT"
 publish = false
 

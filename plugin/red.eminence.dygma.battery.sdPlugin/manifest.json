@@ -4,9 +4,9 @@
   "Name": "Dygma Battery",
   "Version": "1.3.0.0",
   "Author": "Eminence",
-  "Description": "Shows Dygma wireless battery levels on a Stream Deck key via Focus serial. Unofficial community plugin — not affiliated with Dygma Lab SL. Use at your own risk.",
+  "Description": "Shows left/right wireless battery levels from a Dygma Neuron on a Stream Deck key (Defy, Raise 2, Sonsei wireless). Uses Focus serial over USB — not pure Bluetooth. Unofficial community plugin; Dygma logo used with permission. Not an official Dygma product. Use at your own risk.",
   "Icon": "imgs/plugin",
-  "Category": "Dygma",
+  "Category": "Dygma Battery",
   "CategoryIcon": "imgs/category",
   "CodePath": "bin/dygma-sd-plugin-mac",
   "CodePathWin": "bin/dygma-sd-plugin.exe",
@@ -33,8 +33,8 @@
   "Actions": [
     {
       "UUID": "red.eminence.dygma.battery.levels",
-      "Name": "Defy Battery",
-      "Tooltip": "Left / right wireless battery %. Press to refresh. Close Bazecor while using. Unofficial plugin.",
+      "Name": "Dygma Battery",
+      "Tooltip": "Left / right wireless battery % (Defy, Raise 2, Sonsei). Press to refresh. Close Bazecor while using.",
       "Icon": "imgs/action",
       "PropertyInspectorPath": "ui/property-inspector.html",
       "Controllers": ["Keypad"],

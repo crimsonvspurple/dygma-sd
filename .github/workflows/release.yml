@@ -194,7 +194,7 @@ jobs:
 
             1. Download **`red.eminence.dygma.battery.streamDeckPlugin`** (preferred).
             2. Double-click to install into Stream Deck (Windows / macOS).
-            3. Add **Dygma → Defy Battery** to a key.
+            3. Add **Dygma Battery → Dygma Battery** to a key.
             4. **Close Bazecor** while the plugin owns the Neuron serial port.
 
             Fallback: download `*.sdPlugin.zip` and extract into the Stream Deck Plugins folder:

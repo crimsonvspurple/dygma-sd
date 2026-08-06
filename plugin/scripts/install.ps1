@@ -87,5 +87,5 @@ if (-not $NoRestart) {
   }
 }
 
-Write-Host "Done. Add action from category Dygma -> Defy Battery."
+Write-Host "Done. Add action from category Dygma Battery -> Dygma Battery."
 Write-Host "Close Bazecor while the plugin is reading COM."
