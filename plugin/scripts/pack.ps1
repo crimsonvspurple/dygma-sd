@@ -42,12 +42,18 @@ function Resolve-PluginVersion([string]$inputVersion) {
   }
   if (-not $inputVersion) {
     $manifest = Get-Content (Join-Path $sdPluginDir 'manifest.json') -Raw | ConvertFrom-Json
-    return $manifest.Version
+    $inputVersion = [string]$manifest.Version
   }
+  # Stream Deck / Maker: exactly 4 numeric segments (e.g. 1.5.1.0). Cap extras
+  # so a bad 1.5.1.0.0.0 never ships.
   $v = $inputVersion.TrimStart('v')
-  $parts = $v.Split('.')
+  if ($v -notmatch '^\d+(\.\d+){0,}$') {
+    throw "Invalid plugin version '$v' (expected major.minor[.patch[.build]])"
+  }
+  $parts = @($v.Split('.') | Where-Object { $_ -match '^\d+$' })
   while ($parts.Count -lt 4) { $parts += '0' }
-  return ($parts[0..3] -join '.')
+  if ($parts.Count -gt 4) { $parts = $parts[0..3] }
+  return ($parts -join '.')
 }
 
 $pluginVersion = Resolve-PluginVersion $Version

@@ -115,9 +115,16 @@ jobs:
             v="v0.0.0-dev"
           fi
           bare="${v#v}"
-          # Stream Deck wants up to 4 numeric segments
-          IFS='.' read -r a b c d <<< "${bare}.0.0.0"
-          plugin_version="${a}.${b}.${c:-0}.${d:-0}"
+          # Stream Deck / Maker: exactly 4 numeric segments (e.g. 1.5.1.0).
+          # Do NOT use `read a b c d <<< "$x.0.0.0"` — bash assigns leftover
+          # fields to the last variable, turning 1.5.1 into 1.5.1.0.0.0.
+          if [[ ! "$bare" =~ ^[0-9]+(\.[0-9]+){0,3}$ ]]; then
+            echo "Invalid version '$bare' (expected major.minor[.patch[.build]])" >&2
+            exit 1
+          fi
+          IFS='.' read -ra parts <<< "$bare"
+          while (( ${#parts[@]} < 4 )); do parts+=(0); done
+          plugin_version="${parts[0]}.${parts[1]}.${parts[2]}.${parts[3]}"
           echo "tag=$v" >> "$GITHUB_OUTPUT"
           echo "plugin_version=$plugin_version" >> "$GITHUB_OUTPUT"
           echo "tag=$v plugin_version=$plugin_version"
@@ -150,11 +157,11 @@ jobs:
           m["CodePath"] = "bin/dygma-sd-plugin-mac"
           m["CodePathWin"] = "bin/dygma-sd-plugin.exe"
           m["CodePathMac"] = "bin/dygma-sd-plugin-mac"
-          m["CodePathLin"] = "bin/dygma-sd-plugin-linux"
+          # Marketplace only allows Windows/macOS (no linux Platform / CodePathLin).
+          m.pop("CodePathLin", None)
           m["OS"] = [
             {"Platform": "windows", "MinimumVersion": "10"},
             {"Platform": "mac", "MinimumVersion": "10.15"},
-            {"Platform": "linux", "MinimumVersion": "20.04"},
           ]
           p.write_text(json.dumps(m, indent=2) + "\n", encoding="utf-8")
           print(p.read_text())

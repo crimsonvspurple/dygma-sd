@@ -11,7 +11,6 @@
   "CodePath": "bin/dygma-sd-plugin-mac",
   "CodePathWin": "bin/dygma-sd-plugin.exe",
   "CodePathMac": "bin/dygma-sd-plugin-mac",
-  "CodePathLin": "bin/dygma-sd-plugin-linux",
   "SDKVersion": 3,
   "Software": {
     "MinimumVersion": "7.3"
@@ -24,10 +23,6 @@
     {
       "Platform": "mac",
       "MinimumVersion": "10.15"
-    },
-    {
-      "Platform": "linux",
-      "MinimumVersion": "20.04"
     }
   ],
   "Actions": [
