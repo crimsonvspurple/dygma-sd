@@ -22,8 +22,8 @@ Works with **wireless split** boards that expose Focus `wireless.battery.*` (Neu
 
 | OS | Stream Deck host | Notes |
 |----|------------------|--------|
-| **Windows** | Official Elgato app 6.4+ | Primary / verified |
-| **macOS** | Official Elgato app 6.4+ | **Beta** — binary `dygma-sd-plugin-mac` |
+| **Windows** | Official Elgato app **7.0+** | Primary / verified |
+| **macOS** | Official Elgato app **7.0+** | **Beta** — binary `dygma-sd-plugin-mac` |
 | **Linux** | No official Elgato app | Experimental binary for `--self-test` / community hosts |
 
 Serial ports: Windows `COM4`, macOS `/dev/cu.usbmodem…`, Linux `/dev/ttyACM0` (add user to `dialout` or use udev).
@@ -35,7 +35,7 @@ Serial ports: Windows `COM4`, macOS `/dev/cu.usbmodem…`, Linux `/dev/ttyACM0` 
 | Neuron USB | Focus serial (e.g. VID `35EF`; Defy verified, Raise 2 / Sonsei beta) |
 | Sides | RF to Neuron (not side USB cables) |
 | Bazecor | **Closed** while the plugin owns the serial port |
-| Stream Deck | 6.4+ on Windows/macOS |
+| Stream Deck | **7.0+** (SDKVersion 3; Marketplace DRM-ready) |
 | Build | Rust stable; Windows needs MSVC/link; Linux needs `pkg-config` + `libudev-dev` |
 
 Bluetooth-only (Neuron under left half, no USB) does **not** expose Focus serial.

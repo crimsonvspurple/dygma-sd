@@ -145,6 +145,8 @@ jobs:
           p = pathlib.Path("plugin/red.eminence.dygma.battery.sdPlugin/manifest.json")
           m = json.loads(p.read_text(encoding="utf-8"))
           m["Version"] = "$VER"
+          m["SDKVersion"] = 3
+          m["Software"] = {"MinimumVersion": "7.0"}
           m["CodePath"] = "bin/dygma-sd-plugin-mac"
           m["CodePathWin"] = "bin/dygma-sd-plugin.exe"
           m["CodePathMac"] = "bin/dygma-sd-plugin-mac"
@@ -209,10 +211,11 @@ jobs:
 
             Multi-OS package (Windows + macOS + Linux binaries).
 
-            - **Windows:** primary / verified (Stream Deck 6.4+).
-            - **macOS:** **beta** (Stream Deck 6.4+).
+            - **Windows:** primary / verified (**Stream Deck 7.0+**).
+            - **macOS:** **beta** (Stream Deck 7.0+).
             - **Linux:** experimental (no official Elgato app).
             - **Boards:** **Defy** verified; **Raise 2** and **Sonsei** wireless are **beta**.
+            - **SDKVersion 3** + MinVersion **7.0** — Marketplace **DRM-ready**.
 
             ## Notes
 
