@@ -2,7 +2,7 @@
   "$schema": "https://schemas.elgato.com/streamdeck/plugins/manifest.json",
   "UUID": "red.eminence.dygma.battery",
   "Name": "Dygma Battery",
-  "Version": "1.5.0.0",
+  "Version": "1.5.1.0",
   "Author": "Eminence",
   "Description": "Shows left/right wireless battery levels from a Dygma Neuron on a Stream Deck key. Verified on Defy; Raise 2 and Sonsei wireless are beta. Windows primary; macOS is beta. Focus serial over USB only (not pure Bluetooth). Unofficial community plugin; Dygma logo used with permission. Not an official Dygma product. Use at your own risk.",
   "Icon": "imgs/plugin",
@@ -14,7 +14,7 @@
   "CodePathLin": "bin/dygma-sd-plugin-linux",
   "SDKVersion": 3,
   "Software": {
-    "MinimumVersion": "7.0"
+    "MinimumVersion": "7.3"
   },
   "OS": [
     {

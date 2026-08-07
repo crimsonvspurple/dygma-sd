@@ -1,6 +1,6 @@
 [package]
 name = "dygma-sd-plugin"
-version = "1.5.0"
+version = "1.5.1"
 edition = "2021"
 description = "Stream Deck plugin: Dygma wireless battery via Focus (Defy verified; Raise 2 / Sonsei beta; macOS beta)"
 license = "MIT"

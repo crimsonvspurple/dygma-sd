@@ -12,9 +12,9 @@ Copy/paste into [Maker Console](https://maker.elgato.com/). Update after each re
 | **Plugin UUID** | `red.eminence.dygma.battery` (must not change after publish) |
 | **Price** | Free |
 | **OS** | Windows 10+ (primary); **macOS 10.15+ beta**; Linux binary experimental only (no official Stream Deck app) |
-| **Stream Deck** | **7.0+** |
+| **Stream Deck** | **7.3+** |
 | **SDKVersion** | **3** (latest; enables Marketplace DRM) |
-| **DRM** | **Yes** — set in Maker Console when uploading a package with SDKVersion 3 + MinimumVersion ≥ 6.9 (we use 7.0) |
+| **DRM** | **Yes** — set in Maker Console when uploading a package with SDKVersion 3 + MinimumVersion ≥ 6.9 (we use 7.3) |
 | **Category (in Stream Deck)** | Dygma Battery |
 | **Action** | Dygma Battery |
 
@@ -46,8 +46,8 @@ Show left and right wireless battery levels from a Dygma Neuron on a Stream Deck
 - Neuron connected to the PC by **USB** (pure Bluetooth mode is not supported)
 - Keyboard halves linked to the Neuron over **RF** (not side USB cables for battery read)
 - **Bazecor closed** while this plugin uses the serial port
-- Stream Deck software **7.0+** (**Windows** primary; **macOS beta**)
-- Manifest: `SDKVersion` **3**, `Software.MinimumVersion` **7.0** (DRM-eligible package)
+- Stream Deck software **7.3+** (**Windows** primary; **macOS beta**)
+- Manifest: `SDKVersion` **3**, `Software.MinimumVersion` **7.3** (DRM-eligible package)
 
 **Platform status**
 
@@ -107,7 +107,7 @@ Prefer the artifact from CI release `v*` after `streamdeck validate` / `pack` on
 - [ ] Upload latest `.streamDeckPlugin`
 - [ ] Confirm OS listing: Windows primary, macOS beta (accurate)
 - [ ] Support / source link: GitHub repo
-- [ ] Confirm **DRM protection = Yes** (requires SDKVersion 3 + MinVersion ≥ 6.9; this build uses 7.0)
+- [ ] Confirm **DRM protection = Yes** (requires SDKVersion 3 + MinVersion ≥ 6.9; this build uses 7.3)
 - [ ] Optional: uncheck “publish automatically” until you’ve smoke-tested the DRM-processed build from Versions tab
 - [ ] Submit for review (expect **4–10 business days**)
 

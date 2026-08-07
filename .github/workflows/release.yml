@@ -146,7 +146,7 @@ jobs:
           m = json.loads(p.read_text(encoding="utf-8"))
           m["Version"] = "$VER"
           m["SDKVersion"] = 3
-          m["Software"] = {"MinimumVersion": "7.0"}
+          m["Software"] = {"MinimumVersion": "7.3"}
           m["CodePath"] = "bin/dygma-sd-plugin-mac"
           m["CodePathWin"] = "bin/dygma-sd-plugin.exe"
           m["CodePathMac"] = "bin/dygma-sd-plugin-mac"
@@ -211,11 +211,11 @@ jobs:
 
             Multi-OS package (Windows + macOS + Linux binaries).
 
-            - **Windows:** primary / verified (**Stream Deck 7.0+**).
-            - **macOS:** **beta** (Stream Deck 7.0+).
+            - **Windows:** primary / verified (**Stream Deck 7.3+**).
+            - **macOS:** **beta** (Stream Deck 7.3+).
             - **Linux:** experimental (no official Elgato app).
             - **Boards:** **Defy** verified; **Raise 2** and **Sonsei** wireless are **beta**.
-            - **SDKVersion 3** + MinVersion **7.0** — Marketplace **DRM-ready**.
+            - **SDKVersion 3** + MinVersion **7.3** — Marketplace **DRM-ready**.
 
             ## Notes
 
