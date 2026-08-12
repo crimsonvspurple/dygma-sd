@@ -77,10 +77,20 @@ pub fn error_image_data_uri() -> String {
 }
 
 pub fn render_levels_svg(levels: &BatteryLevels, show_percentage: bool) -> String {
-    let left_blocks = blocks_for_percent(levels.left);
-    let right_blocks = blocks_for_percent(levels.right);
     let left_charge = is_charging(levels.left_status);
     let right_charge = is_charging(levels.right_status);
+    // While a side is on cable charge the fuel-gauge % is unreliable, so we
+    // keep empty outlines + bolt only (no filled blocks / number for that side).
+    let left_blocks = if left_charge {
+        0
+    } else {
+        blocks_for_percent(levels.left)
+    };
+    let right_blocks = if right_charge {
+        0
+    } else {
+        blocks_for_percent(levels.right)
+    };
 
     // Layout: two columns, padding, room for bolts / optional numbers.
     let pad_x = 6.0_f32;
@@ -144,18 +154,23 @@ pub fn render_levels_svg(levels: &BatteryLevels, show_percentage: bool) -> Strin
 
     if show_percentage {
         let y = VIEW - 5.0;
-        out.push_str(&format!(
-            r##"<text x="{:.1}" y="{:.1}" text-anchor="middle" fill="#e4e4e7" font-family="Segoe UI,system-ui,sans-serif" font-size="9" font-weight="600">{}</text>"##,
-            left_x0 + col_w / 2.0,
-            y,
-            levels.left.min(100)
-        ));
-        out.push_str(&format!(
-            r##"<text x="{:.1}" y="{:.1}" text-anchor="middle" fill="#e4e4e7" font-family="Segoe UI,system-ui,sans-serif" font-size="9" font-weight="600">{}</text>"##,
-            right_x0 + col_w / 2.0,
-            y,
-            levels.right.min(100)
-        ));
+        // Skip numbers on charging sides (level is not trustworthy while charging).
+        if !left_charge {
+            out.push_str(&format!(
+                r##"<text x="{:.1}" y="{:.1}" text-anchor="middle" fill="#e4e4e7" font-family="Segoe UI,system-ui,sans-serif" font-size="9" font-weight="600">{}</text>"##,
+                left_x0 + col_w / 2.0,
+                y,
+                levels.left.min(100)
+            ));
+        }
+        if !right_charge {
+            out.push_str(&format!(
+                r##"<text x="{:.1}" y="{:.1}" text-anchor="middle" fill="#e4e4e7" font-family="Segoe UI,system-ui,sans-serif" font-size="9" font-weight="600">{}</text>"##,
+                right_x0 + col_w / 2.0,
+                y,
+                levels.right.min(100)
+            ));
+        }
     }
 
     out.push_str("</svg>");
@@ -308,8 +323,8 @@ mod tests {
         let levels = BatteryLevels {
             left: 100,
             right: 40,
-            left_status: Some(1),
-            right_status: Some(2),
+            left_status: Some(0),
+            right_status: Some(0),
         };
         let with_pct = render_levels_svg(&levels, true);
         // Numbers only — no trailing % (avoids collision with center logo)
@@ -319,8 +334,6 @@ mod tests {
         assert!(!with_pct.contains("40%"));
         assert!(with_pct.contains("#22c55e")); // left full green
         assert!(with_pct.contains("#f97316")); // right 2 blocks orange
-        // charging bolt on right (status 2)
-        assert!(with_pct.contains("<path fill="));
         // Dygma brand mark present
         assert!(with_pct.contains("aria-label=\"Dygma\""));
         assert!(with_pct.contains("#F43F27"));
@@ -329,6 +342,39 @@ mod tests {
         assert!(!no_pct.contains(">100</text>"));
         assert!(!no_pct.contains("100%"));
         assert!(no_pct.contains("aria-label=\"Dygma\""));
+    }
+
+    #[test]
+    fn charging_hides_fill_and_number_keeps_bolt() {
+        // Stale/wrong levels while charging must not paint filled bars or digits.
+        let levels = BatteryLevels {
+            left: 100,
+            right: 40,
+            left_status: Some(1),
+            right_status: Some(2),
+        };
+        let svg = render_levels_svg(&levels, true);
+        assert!(!svg.contains(">100</text>"));
+        assert!(!svg.contains(">40</text>"));
+        assert!(!svg.contains("#22c55e"));
+        assert!(!svg.contains("#f97316"));
+        // Empty block fill + yellow bolt path
+        assert!(svg.contains("#2a2a30"));
+        assert!(svg.contains("#fde047"));
+        assert!(svg.contains("aria-label=\"Dygma\""));
+
+        // Mixed: only the charging side is blanked.
+        let mixed = BatteryLevels {
+            left: 55,
+            right: 80,
+            left_status: Some(0),
+            right_status: Some(1),
+        };
+        let mixed_svg = render_levels_svg(&mixed, true);
+        assert!(mixed_svg.contains(">55</text>"));
+        assert!(!mixed_svg.contains(">80</text>"));
+        assert!(mixed_svg.contains("#eab308")); // left 3 blocks yellow
+        assert!(mixed_svg.contains("#fde047")); // right bolt
     }
 
     #[test]

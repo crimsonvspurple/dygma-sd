@@ -1,6 +1,10 @@
 # Generate Elgato Marketplace media (app icon, thumbnail, gallery).
 # Requires: plugin/assets/dygma-logo.png
 # Output: marketplace/*.png
+#
+# ASCII-only UI strings: Windows PowerShell 5.x often loads this script as
+# system ANSI, which turns UTF-8 middle-dots into the "A umlaut" mojibake
+# (C2 B7 -> A-circumflex + middle-dot). Keep separators ASCII.
 
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Drawing
@@ -48,6 +52,7 @@ function Get-BlockColor([int]$b) {
   }
 }
 
+# Mirrors plugin/src/visual.rs key art (incl. charging = empty bars + bolt only).
 function Draw-KeyArt(
   [System.Drawing.Graphics]$g,
   [float]$ox, [float]$oy, [float]$scale,
@@ -64,7 +69,7 @@ function Draw-KeyArt(
 
   $padX = 6.0; $BLOCKS = 5
   $padTop = if ($leftChg -or $rightChg) { 14.0 } else { 8.0 }
-  $padBottom = if ($showPct) { 16.0 } else { 8.0 }
+  $padBottom = if ($showPct) { 18.0 } else { 10.0 }
   $gap = 10.0
   $colW = ($VIEW - $padX * 2 - $gap) / 2
   $stackH = $VIEW - $padTop - $padBottom
@@ -72,9 +77,12 @@ function Draw-KeyArt(
   $blockH = ($stackH - $blockGap * ($BLOCKS - 1)) / $BLOCKS
   $empty = [System.Drawing.Color]::FromArgb(255, 42, 42, 48)
 
+  $leftBlocks = if ($leftChg) { 0 } else { Get-Blocks $leftPct }
+  $rightBlocks = if ($rightChg) { 0 } else { Get-Blocks $rightPct }
+
   $cols = @(
-    @{ x = $padX; blocks = (Get-Blocks $leftPct); align = 'L'; chg = $leftChg; pct = $leftPct },
-    @{ x = $padX + $colW + $gap; blocks = (Get-Blocks $rightPct); align = 'R'; chg = $rightChg; pct = $rightPct }
+    @{ x = $padX; blocks = $leftBlocks; align = 'L'; chg = $leftChg; pct = $leftPct },
+    @{ x = $padX + $colW + $gap; blocks = $rightBlocks; align = 'R'; chg = $rightChg; pct = $rightPct }
   )
   foreach ($c in $cols) {
     $fill = Get-BlockColor $c.blocks
@@ -105,14 +113,27 @@ function Draw-KeyArt(
       $yb.Dispose()
     }
   }
+
+  # Center Dygma mark (higher + larger; matches plugin visual.rs)
+  $logoSize = if ($showPct) { 11.0 } else { 12.0 }
+  $logoCy = if ($showPct) { $VIEW - 14.0 } else { $VIEW - 10.0 }
+  $logoPx = ($VIEW - $logoSize) / 2.0
+  $logoPy = $logoCy - $logoSize / 2.0
+  $g.DrawImage($script:logo, $logoPx, $logoPy, $logoSize, $logoSize)
+
   if ($showPct) {
     $font = New-Object System.Drawing.Font 'Segoe UI', 9, ([System.Drawing.FontStyle]::Bold)
     $tb = New-Object System.Drawing.SolidBrush ([System.Drawing.Color]::FromArgb(255, 228, 228, 231))
     $sf = New-Object System.Drawing.StringFormat
     $sf.Alignment = [System.Drawing.StringAlignment]::Center
-    $g.DrawString("$leftPct%", $font, $tb, ($padX + $colW / 2), ($VIEW - 12), $sf)
-    $g.DrawString("$rightPct%", $font, $tb, ($padX + $colW + $gap + $colW / 2), ($VIEW - 12), $sf)
-    $font.Dispose(); $tb.Dispose()
+    # Numbers only (no %); skip charging sides.
+    if (-not $leftChg) {
+      $g.DrawString("$leftPct", $font, $tb, ($padX + $colW / 2), ($VIEW - 14), $sf)
+    }
+    if (-not $rightChg) {
+      $g.DrawString("$rightPct", $font, $tb, ($padX + $colW + $gap + $colW / 2), ($VIEW - 14), $sf)
+    }
+    $font.Dispose(); $tb.Dispose(); $sf.Dispose()
   }
   $g.Restore($state)
 }
@@ -138,7 +159,8 @@ function New-Banner([string]$title, [string]$subtitle, [scriptblock]$extra) {
   $white = New-Object System.Drawing.SolidBrush ([System.Drawing.Color]::White)
   $muted = New-Object System.Drawing.SolidBrush ([System.Drawing.Color]::FromArgb(255, 161, 161, 170))
   $g.DrawString($title, $titleFont, $white, 280, 100)
-  $g.DrawString($subtitle, $subFont, $muted, 280, 190)
+  # Bound subtitle so long lines wrap instead of clipping off-canvas.
+  $g.DrawString($subtitle, $subFont, $muted, (New-Object System.Drawing.RectangleF 280, 190, 1520, 80))
   & $extra $g
   $titleFont.Dispose(); $subFont.Dispose(); $white.Dispose(); $muted.Dispose()
   $g.Dispose()
@@ -156,33 +178,35 @@ $ag.Dispose()
 Save-Png $app (Join-Path $out 'app-icon-288.png')
 $app.Dispose()
 
-$thumb = New-Banner 'Dygma Battery' 'Wireless left / right battery on Stream Deck  ·  Defy verified · Raise 2 / Sonsei beta · macOS beta' {
+$thumb = New-Banner 'Dygma Battery' 'Wireless left / right battery on Stream Deck  |  Defy verified  |  Raise 2 / Sonsei beta  |  macOS beta' {
   param($g)
+  # Charging = empty outlines + bolts (no fill / number). Then RF mid, low, bars-only.
   Draw-KeyArt $g 280 360 4.2 100 40 $true $true $true
   Draw-KeyArt $g 620 360 4.2 72 55 $false $false $true
   Draw-KeyArt $g 960 360 4.2 18 8 $false $false $true
   Draw-KeyArt $g 1300 360 4.2 90 90 $false $false $false
   $f = New-Object System.Drawing.Font 'Segoe UI', 16
   $m = New-Object System.Drawing.SolidBrush ([System.Drawing.Color]::FromArgb(255, 113, 113, 122))
-  $g.DrawString('Charging + %     Mid charge     Low     Bars only', $f, $m, 280, 720)
+  $g.DrawString('Charging     Mid charge     Low     Bars only', $f, $m, 280, 720)
   $f.Dispose(); $m.Dispose()
   $tag = New-Object System.Drawing.Font 'Segoe UI', 14, ([System.Drawing.FontStyle]::Bold)
   $tb = New-Object System.Drawing.SolidBrush ([System.Drawing.Color]::FromArgb(255, 244, 63, 39))
-  $g.DrawString('by Eminence  ·  Unofficial community plugin  ·  Logo used with permission', $tag, $tb, 80, 880)
+  $g.DrawString('by Eminence  |  Unofficial community plugin  |  Logo used with permission', $tag, $tb, 80, 880)
   $tag.Dispose(); $tb.Dispose()
 }
 Save-Png $thumb (Join-Path $out 'thumbnail-1920x960.png')
 $thumb.Dispose()
 
-$g1 = New-Banner 'Live key art' 'Dual bars · charge colors · optional % · charging bolts · Dygma mark' {
+$g1 = New-Banner 'Live key art' 'Dual bars  |  charge colors  |  optional numbers  |  charging = bolt only  |  Dygma mark' {
   param($g)
-  Draw-KeyArt $g 520 320 6.5 100 40 $true $true $true
-  Draw-KeyArt $g 1100 320 6.5 55 75 $false $true $true
+  # Left: both charging (empty + bolts). Right: RF left + charging right (mixed).
+  Draw-KeyArt $g 420 320 6.5 100 40 $true $true $true
+  Draw-KeyArt $g 1000 320 6.5 55 75 $false $true $true
 }
 Save-Png $g1 (Join-Path $out 'gallery-01-key-art.png')
 $g1.Dispose()
 
-$g2 = New-Banner 'How it works' 'Neuron USB + RF sides  ·  Focus serial  ·  Close Bazecor while reading' {
+$g2 = New-Banner 'How it works' 'Neuron USB + RF sides  |  Focus serial  |  Close Bazecor while reading' {
   param($g)
   $boxFont = New-Object System.Drawing.Font 'Segoe UI', 20, ([System.Drawing.FontStyle]::Bold)
   $bodyFont = New-Object System.Drawing.Font 'Segoe UI', 16
@@ -212,23 +236,36 @@ $g3 = New-Banner 'Supported boards' 'Any wireless Dygma with Focus wireless.batt
   $card = New-Object System.Drawing.SolidBrush ([System.Drawing.Color]::FromArgb(255, 28, 28, 36))
   $titleF = New-Object System.Drawing.Font 'Segoe UI', 28, ([System.Drawing.FontStyle]::Bold)
   $bodyF = New-Object System.Drawing.Font 'Segoe UI', 16
+  $statusF = New-Object System.Drawing.Font 'Segoe UI', 14
   $white = New-Object System.Drawing.SolidBrush ([System.Drawing.Color]::White)
   $muted = New-Object System.Drawing.SolidBrush ([System.Drawing.Color]::FromArgb(255, 161, 161, 170))
+  $accent = New-Object System.Drawing.SolidBrush ([System.Drawing.Color]::FromArgb(255, 244, 63, 39))
   $boards = @(
     @{ n = 'Defy'; d = 'Columnar wireless'; s = 'Verified' },
     @{ n = 'Raise 2'; d = 'Row-staggered wireless'; s = 'Beta' },
     @{ n = 'Sonsei'; d = 'Low-profile wireless'; s = 'Beta' }
   )
-  $x = 200
+  # Three equal cards with margin so text never clips the canvas edge.
+  $cardW = 520.0
+  $cardH = 300.0
+  $gap = 40.0
+  $totalW = 3 * $cardW + 2 * $gap
+  $x = (1920.0 - $totalW) / 2.0
+  $y = 340.0
   foreach ($b in $boards) {
-    $g.FillPath($card, (New-RoundedRectPath $x 360 480 280 20))
-    $g.DrawImage($script:logo, ($x + 40), 400, 90, 90)
-    $g.DrawString($b.n, $titleF, $white, ($x + 160), 420)
-    $g.DrawString($b.d, $bodyF, $muted, ($x + 160), 480)
-    $g.DrawString("$($b.s)  ·  Windows primary  ·  macOS beta", $bodyF, $muted, ($x + 160), 540)
-    $x += 520
+    $g.FillPath($card, (New-RoundedRectPath $x $y $cardW $cardH 20))
+    $g.DrawImage($script:logo, ($x + 36), ($y + 40), 84, 84)
+    $textLeft = $x + 140
+    $textW = $cardW - 160
+    $g.DrawString($b.n, $titleF, $white, (New-Object System.Drawing.RectangleF $textLeft, ($y + 48), $textW, 44))
+    $g.DrawString($b.d, $bodyF, $muted, (New-Object System.Drawing.RectangleF $textLeft, ($y + 110), $textW, 40))
+    # Status on its own lines inside the card (no long single-line overflow).
+    $g.DrawString($b.s, $statusF, $accent, (New-Object System.Drawing.RectangleF $textLeft, ($y + 180), $textW, 28))
+    $g.DrawString('Windows primary  |  macOS beta', $statusF, $muted, (New-Object System.Drawing.RectangleF $textLeft, ($y + 214), $textW, 28))
+    $x += $cardW + $gap
   }
-  $card.Dispose(); $titleF.Dispose(); $bodyF.Dispose(); $white.Dispose(); $muted.Dispose()
+  $card.Dispose(); $titleF.Dispose(); $bodyF.Dispose(); $statusF.Dispose()
+  $white.Dispose(); $muted.Dispose(); $accent.Dispose()
 }
 Save-Png $g3 (Join-Path $out 'gallery-03-boards.png')
 $g3.Dispose()

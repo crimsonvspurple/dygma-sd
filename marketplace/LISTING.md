@@ -36,8 +36,8 @@ Show left and right wireless battery levels from a Dygma Neuron on a Stream Deck
 
 - Dual vertical bars for left and right halves
 - Color by charge (green → red)
-- Optional percentage labels
-- Charging indicators
+- Optional numeric labels (no % sign)
+- Charging: bolt + empty outlines only (level is unreliable while charging)
 - Device picker when multiple Neurons are connected
 - Auto-poll (default 60s) and key-press force refresh
 
@@ -84,7 +84,7 @@ Hardware integrations need a short demo. Suggested script (~30–60s):
 1. Stream Deck + Neuron USB + wireless halves; Bazecor closed.
 2. Add **Dygma Battery** action; show bars update.
 3. Optional: toggle % in property inspector.
-4. Optional: plug charger → bolt appears.
+4. Optional: plug charger → bolt appears; filled level hides while charging.
 5. Optional: force refresh by pressing the key.
 
 Export **1920×1080 MP4**, under size limits in Maker Console.
