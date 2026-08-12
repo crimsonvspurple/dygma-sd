@@ -1,0 +1,6 @@
+# Product photos from dygma.com (official marketing assets)
+# Used with logo permission context; not an official Dygma product.
+#
+# defy.png    - https://dygma.com/cdn/shop/files/dygma-defy-blue.png
+# raise2.png  - https://dygma.com/cdn/shop/files/dygma-raise-2-small-menu.png
+# sonsei.png  - https://dygma.com/cdn/shop/files/sonsei-keyboard-5.png

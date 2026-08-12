@@ -16,9 +16,33 @@ $logoPath = Join-Path $root 'plugin\assets\dygma-logo.png'
 if (-not (Test-Path $logoPath)) { throw "Missing logo: $logoPath" }
 $logo = [System.Drawing.Image]::FromFile($logoPath)
 
+$photosDir = Join-Path $out 'product-photos'
+function Get-ProductPhoto([string]$name) {
+  $path = Join-Path $photosDir $name
+  if (-not (Test-Path $path)) { throw "Missing product photo: $path (see product-photos/SOURCES.txt)" }
+  return [System.Drawing.Image]::FromFile($path)
+}
+$photoDefy = Get-ProductPhoto 'defy.png'
+$photoRaise2 = Get-ProductPhoto 'raise2.png'
+$photoSonsei = Get-ProductPhoto 'sonsei.png'
+
 function Save-Png([System.Drawing.Bitmap]$bmp, [string]$path) {
   $bmp.Save($path, [System.Drawing.Imaging.ImageFormat]::Png)
   Write-Host "Wrote $path ($($bmp.Width)x$($bmp.Height))"
+}
+
+# Draw image letterboxed (contain) into a rect, centered.
+function Draw-ImageContain(
+  [System.Drawing.Graphics]$g,
+  [System.Drawing.Image]$img,
+  [float]$x, [float]$y, [float]$w, [float]$h
+) {
+  $scale = [math]::Min($w / $img.Width, $h / $img.Height)
+  $dw = $img.Width * $scale
+  $dh = $img.Height * $scale
+  $dx = $x + ($w - $dw) / 2
+  $dy = $y + ($h - $dh) / 2
+  $g.DrawImage($img, $dx, $dy, $dw, $dh)
 }
 
 function New-RoundedRectPath([float]$x, [float]$y, [float]$w, [float]$h, [float]$r) {
@@ -178,7 +202,7 @@ $ag.Dispose()
 Save-Png $app (Join-Path $out 'app-icon-288.png')
 $app.Dispose()
 
-$thumb = New-Banner 'Dygma Battery' 'Wireless left / right battery on Stream Deck  |  Defy verified  |  Raise 2 / Sonsei beta  |  macOS beta' {
+$thumb = New-Banner 'Dygma Battery' 'Wireless Left / Right Battery on Stream Deck  |  Defy Verified  |  Raise 2 / Sonsei Beta  |  macOS Beta' {
   param($g)
   # Charging = empty outlines + bolts (no fill / number). Then RF mid, low, bars-only.
   Draw-KeyArt $g 280 360 4.2 100 40 $true $true $true
@@ -187,17 +211,17 @@ $thumb = New-Banner 'Dygma Battery' 'Wireless left / right battery on Stream Dec
   Draw-KeyArt $g 1300 360 4.2 90 90 $false $false $false
   $f = New-Object System.Drawing.Font 'Segoe UI', 16
   $m = New-Object System.Drawing.SolidBrush ([System.Drawing.Color]::FromArgb(255, 113, 113, 122))
-  $g.DrawString('Charging     Mid charge     Low     Bars only', $f, $m, 280, 720)
+  $g.DrawString('Charging     Mid Charge     Low     Bars Only', $f, $m, 280, 720)
   $f.Dispose(); $m.Dispose()
   $tag = New-Object System.Drawing.Font 'Segoe UI', 14, ([System.Drawing.FontStyle]::Bold)
   $tb = New-Object System.Drawing.SolidBrush ([System.Drawing.Color]::FromArgb(255, 244, 63, 39))
-  $g.DrawString('by Eminence  |  Unofficial community plugin  |  Logo used with permission', $tag, $tb, 80, 880)
+  $g.DrawString('By Eminence  |  Unofficial Community Plugin  |  Logo Used with Permission', $tag, $tb, 80, 880)
   $tag.Dispose(); $tb.Dispose()
 }
 Save-Png $thumb (Join-Path $out 'thumbnail-1920x960.png')
 $thumb.Dispose()
 
-$g1 = New-Banner 'Live key art' 'Dual bars  |  charge colors  |  optional numbers  |  charging = bolt only  |  Dygma mark' {
+$g1 = New-Banner 'Live Key Art' 'Dual Bars  |  Charge Colors  |  Optional Numbers  |  Charging = Bolt Only  |  Dygma Mark' {
   param($g)
   # Left: both charging (empty + bolts). Right: RF left + charging right (mixed).
   Draw-KeyArt $g 420 320 6.5 100 40 $true $true $true
@@ -206,7 +230,7 @@ $g1 = New-Banner 'Live key art' 'Dual bars  |  charge colors  |  optional number
 Save-Png $g1 (Join-Path $out 'gallery-01-key-art.png')
 $g1.Dispose()
 
-$g2 = New-Banner 'How it works' 'Neuron USB + RF sides  |  Focus serial  |  Close Bazecor while reading' {
+$g2 = New-Banner 'How It Works' 'Neuron USB + RF Sides  |  Focus Serial  |  Close Bazecor While Reading' {
   param($g)
   $boxFont = New-Object System.Drawing.Font 'Segoe UI', 20, ([System.Drawing.FontStyle]::Bold)
   $bodyFont = New-Object System.Drawing.Font 'Segoe UI', 16
@@ -214,10 +238,10 @@ $g2 = New-Banner 'How it works' 'Neuron USB + RF sides  |  Focus serial  |  Clos
   $muted = New-Object System.Drawing.SolidBrush ([System.Drawing.Color]::FromArgb(255, 180, 180, 190))
   $card = New-Object System.Drawing.SolidBrush ([System.Drawing.Color]::FromArgb(255, 28, 28, 36))
   $items = @(
-    @{ t = '1. Neuron on USB'; d = 'Focus serial (not pure Bluetooth mode)' },
-    @{ t = '2. Halves on RF'; d = 'Wireless battery fuel-gauge over RF to Neuron' },
-    @{ t = '3. Close Bazecor'; d = 'One process owns the serial port at a time' },
-    @{ t = '4. Drop on a key'; d = 'Auto-poll; press key to force refresh' }
+    @{ t = '1. Neuron on USB'; d = 'Focus Serial (Not Pure Bluetooth Mode)' },
+    @{ t = '2. Halves on RF'; d = 'Wireless Battery Fuel-Gauge over RF to Neuron' },
+    @{ t = '3. Close Bazecor'; d = 'One Process Owns the Serial Port at a Time' },
+    @{ t = '4. Drop on a Key'; d = 'Auto-Poll; Press Key to Force Refresh' }
   )
   $x = 120; $y = 340
   foreach ($it in $items) {
@@ -231,44 +255,60 @@ $g2 = New-Banner 'How it works' 'Neuron USB + RF sides  |  Focus serial  |  Clos
 Save-Png $g2 (Join-Path $out 'gallery-02-setup.png')
 $g2.Dispose()
 
-$g3 = New-Banner 'Supported boards' 'Any wireless Dygma with Focus wireless.battery.* over Neuron USB' {
+$g3 = New-Banner 'Supported Boards' 'Any Wireless Dygma with Focus wireless.battery.* over Neuron USB' {
   param($g)
   $card = New-Object System.Drawing.SolidBrush ([System.Drawing.Color]::FromArgb(255, 28, 28, 36))
-  $titleF = New-Object System.Drawing.Font 'Segoe UI', 28, ([System.Drawing.FontStyle]::Bold)
-  $bodyF = New-Object System.Drawing.Font 'Segoe UI', 16
-  $statusF = New-Object System.Drawing.Font 'Segoe UI', 14
+  $photoBg = New-Object System.Drawing.SolidBrush ([System.Drawing.Color]::FromArgb(255, 18, 18, 24))
+  $titleF = New-Object System.Drawing.Font 'Segoe UI', 26, ([System.Drawing.FontStyle]::Bold)
+  $bodyF = New-Object System.Drawing.Font 'Segoe UI', 15
+  $statusF = New-Object System.Drawing.Font 'Segoe UI', 14, ([System.Drawing.FontStyle]::Bold)
+  $metaF = New-Object System.Drawing.Font 'Segoe UI', 13
   $white = New-Object System.Drawing.SolidBrush ([System.Drawing.Color]::White)
   $muted = New-Object System.Drawing.SolidBrush ([System.Drawing.Color]::FromArgb(255, 161, 161, 170))
   $accent = New-Object System.Drawing.SolidBrush ([System.Drawing.Color]::FromArgb(255, 244, 63, 39))
+  # Official product art from dygma.com (see product-photos/SOURCES.txt)
   $boards = @(
-    @{ n = 'Defy'; d = 'Columnar wireless'; s = 'Verified' },
-    @{ n = 'Raise 2'; d = 'Row-staggered wireless'; s = 'Beta' },
-    @{ n = 'Sonsei'; d = 'Low-profile wireless'; s = 'Beta' }
+    @{ n = 'Defy'; d = 'Columnar Wireless'; s = 'Verified'; img = $script:photoDefy },
+    @{ n = 'Raise 2'; d = 'Row-Staggered Wireless'; s = 'Beta'; img = $script:photoRaise2 },
+    @{ n = 'Sonsei'; d = 'Low-Profile Wireless'; s = 'Beta'; img = $script:photoSonsei }
   )
-  # Three equal cards with margin so text never clips the canvas edge.
+  # Three equal cards: photo on top, labels below (fits 1920 canvas).
   $cardW = 520.0
-  $cardH = 300.0
+  $cardH = 480.0
   $gap = 40.0
   $totalW = 3 * $cardW + 2 * $gap
   $x = (1920.0 - $totalW) / 2.0
-  $y = 340.0
+  $y = 300.0
+  $photoPad = 20.0
+  $photoH = 250.0
   foreach ($b in $boards) {
     $g.FillPath($card, (New-RoundedRectPath $x $y $cardW $cardH 20))
-    $g.DrawImage($script:logo, ($x + 36), ($y + 40), 84, 84)
-    $textLeft = $x + 140
-    $textW = $cardW - 160
-    $g.DrawString($b.n, $titleF, $white, (New-Object System.Drawing.RectangleF $textLeft, ($y + 48), $textW, 44))
-    $g.DrawString($b.d, $bodyF, $muted, (New-Object System.Drawing.RectangleF $textLeft, ($y + 110), $textW, 40))
-    # Status on its own lines inside the card (no long single-line overflow).
-    $g.DrawString($b.s, $statusF, $accent, (New-Object System.Drawing.RectangleF $textLeft, ($y + 180), $textW, 28))
-    $g.DrawString('Windows primary  |  macOS beta', $statusF, $muted, (New-Object System.Drawing.RectangleF $textLeft, ($y + 214), $textW, 28))
+    # Photo well
+    $px = $x + $photoPad
+    $py = $y + $photoPad
+    $pw = $cardW - 2 * $photoPad
+    $g.FillPath($photoBg, (New-RoundedRectPath $px $py $pw $photoH 14))
+    $state = $g.Save()
+    $g.SetClip((New-RoundedRectPath $px $py $pw $photoH 14))
+    Draw-ImageContain $g $b.img $px $py $pw $photoH
+    $g.Restore($state)
+    # Labels under photo
+    $textY = $py + $photoH + 18
+    $textX = $x + 28
+    $textW = $cardW - 56
+    $g.DrawString($b.n, $titleF, $white, (New-Object System.Drawing.RectangleF $textX, $textY, $textW, 40))
+    $g.DrawString($b.d, $bodyF, $muted, (New-Object System.Drawing.RectangleF $textX, ($textY + 42), $textW, 28))
+    $g.DrawString($b.s, $statusF, $accent, (New-Object System.Drawing.RectangleF $textX, ($textY + 84), $textW, 26))
+    $g.DrawString('Windows Primary  |  macOS Beta', $metaF, $muted, (New-Object System.Drawing.RectangleF $textX, ($textY + 112), $textW, 26))
     $x += $cardW + $gap
   }
-  $card.Dispose(); $titleF.Dispose(); $bodyF.Dispose(); $statusF.Dispose()
+  $card.Dispose(); $photoBg.Dispose()
+  $titleF.Dispose(); $bodyF.Dispose(); $statusF.Dispose(); $metaF.Dispose()
   $white.Dispose(); $muted.Dispose(); $accent.Dispose()
 }
 Save-Png $g3 (Join-Path $out 'gallery-03-boards.png')
 $g3.Dispose()
 
+$photoDefy.Dispose(); $photoRaise2.Dispose(); $photoSonsei.Dispose()
 $logo.Dispose()
 Write-Host 'Marketplace assets ready in marketplace/'

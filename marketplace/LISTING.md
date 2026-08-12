@@ -70,12 +70,15 @@ Source and updates: https://github.com/crimsonvspurple/dygma-sd
 | `gallery-01-key-art.png` | 1920×960 PNG | Gallery 1 |
 | `gallery-02-setup.png` | 1920×960 PNG | Gallery 2 |
 | `gallery-03-boards.png` | 1920×960 PNG | Gallery 3 |
+| `product-photos/` | Defy / Raise 2 / Sonsei art | Source shots for gallery 3 (see `SOURCES.txt`) |
 
 Regenerate:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File marketplace/gen-assets.ps1
 ```
+
+Product photos are official marketing assets from [dygma.com](https://dygma.com/) (cutouts / menu art). Keep them only for Marketplace listing media; this plugin remains unofficial.
 
 ## Demo video (you record)
 
