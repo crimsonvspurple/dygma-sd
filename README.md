@@ -62,7 +62,11 @@ Elgato Marketplace submission materials live in [`marketplace/`](marketplace/):
 | App icon (288×288) | `marketplace/app-icon-288.png` |
 | Thumbnail / galleries | `marketplace/thumbnail-*.png`, `gallery-*.png` |
 
-Regenerate media: `powershell -ExecutionPolicy Bypass -File marketplace/gen-assets.ps1`
+Regenerate media (uses the same key SVG logic as the plugin):
+
+```bash
+cargo run --manifest-path plugin/Cargo.toml --features gen-marketplace --bin gen-marketplace
+```
 
 Submit via [Maker Console](https://maker.elgato.com/) (org **Eminence**). Demo video of a real Neuron + wireless halves is required for hardware integrations.
 

@@ -3,14 +3,10 @@
 //! Protocol: Elgato WebSocket SDK via `streamdeck-rs`.
 //! Hardware: Neuron Focus serial via `dygma_focus`.
 
-mod battery;
-mod error;
-mod plugin;
-mod visual;
-
-use error::PluginError;
+use dygma_sd_plugin::battery;
+use dygma_sd_plugin::error::PluginError;
+use dygma_sd_plugin::plugin::{BatteryOutcome, Plugin, SdSocket};
 use futures::StreamExt;
-use plugin::{BatteryOutcome, Plugin, SdSocket};
 use std::env;
 use std::process::ExitCode;
 use std::time::Duration;

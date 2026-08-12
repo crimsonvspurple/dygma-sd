@@ -76,7 +76,19 @@ pub fn error_image_data_uri() -> String {
     format!("data:image/svg+xml;base64,{}", B64.encode(svg.as_bytes()))
 }
 
+/// Full 72×72 key SVG document (for Stream Deck `setImage` / raster tooling).
 pub fn render_levels_svg(levels: &BatteryLevels, show_percentage: bool) -> String {
+    let mut out = String::with_capacity(4096);
+    out.push_str(
+        r##"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72" shape-rendering="geometricPrecision">"##,
+    );
+    out.push_str(&render_levels_svg_body(levels, show_percentage));
+    out.push_str("</svg>");
+    out
+}
+
+/// Key art body only (no root `<svg>`). Embed in parent SVGs at any scale.
+pub fn render_levels_svg_body(levels: &BatteryLevels, show_percentage: bool) -> String {
     let left_charge = is_charging(levels.left_status);
     let right_charge = is_charging(levels.right_status);
     // While a side is on cable charge the fuel-gauge % is unreliable, so we
@@ -108,9 +120,6 @@ pub fn render_levels_svg(levels: &BatteryLevels, show_percentage: bool) -> Strin
     let block_h = (stack_h - block_gap * (BLOCKS as f32 - 1.0)) / BLOCKS as f32;
 
     let mut out = String::with_capacity(4096);
-    out.push_str(
-        r##"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72" shape-rendering="geometricPrecision">"##,
-    );
     out.push_str(r##"<rect width="72" height="72" rx="8" fill="#141418"/>"##);
 
     // Left column (left-aligned taper: bottom narrower)
@@ -173,7 +182,6 @@ pub fn render_levels_svg(levels: &BatteryLevels, show_percentage: bool) -> Strin
         }
     }
 
-    out.push_str("</svg>");
     out
 }
 

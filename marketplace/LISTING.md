@@ -72,11 +72,14 @@ Source and updates: https://github.com/crimsonvspurple/dygma-sd
 | `gallery-03-boards.png` | 1920×960 PNG | Gallery 3 |
 | `product-photos/` | Defy / Raise 2 / Sonsei art | Source shots for gallery 3 (see `SOURCES.txt`) |
 
-Regenerate:
+Regenerate (Rust; key tiles call `visual::render_levels_svg_body` — same as the plugin):
 
-```powershell
-powershell -ExecutionPolicy Bypass -File marketplace/gen-assets.ps1
+```bash
+cargo run --manifest-path plugin/Cargo.toml --features gen-marketplace --bin gen-marketplace
+# optional: --out DIR  (default: marketplace/)
 ```
+
+CI-friendly: feature-gated binary (`gen-marketplace`); assets are still committed so review does not require regenerating.
 
 Product photos are official marketing assets from [dygma.com](https://dygma.com/) (cutouts / menu art). Keep them only for Marketplace listing media; this plugin remains unofficial.
 
