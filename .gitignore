@@ -27,3 +27,5 @@ Desktop.ini
 *.log
 .env
 .env.*
+/.tmp-chrome-inspect/
+/.tmp-plugin-inspect/
