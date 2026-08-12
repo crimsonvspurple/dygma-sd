@@ -82,14 +82,15 @@ pub fn render_levels_svg(levels: &BatteryLevels, show_percentage: bool) -> Strin
     let left_charge = is_charging(levels.left_status);
     let right_charge = is_charging(levels.right_status);
 
-    // Layout: two columns, padding, room for bolts / optional %.
+    // Layout: two columns, padding, room for bolts / optional numbers.
     let pad_x = 6.0_f32;
     let pad_top = if left_charge || right_charge {
         14.0
     } else {
         8.0
     };
-    let pad_bottom = if show_percentage { 16.0 } else { 8.0 };
+    // Extra bottom pad when numbers are on; logo sits above them in the taper gap.
+    let pad_bottom = if show_percentage { 18.0 } else { 10.0 };
     let gap = 10.0_f32;
     let col_w = (VIEW - pad_x * 2.0 - gap) / 2.0;
     let stack_h = VIEW - pad_top - pad_bottom;
@@ -130,25 +131,27 @@ pub fn render_levels_svg(levels: &BatteryLevels, show_percentage: bool) -> Strin
         right_charge,
     );
 
-    // Tiny Dygma mark, middle-bottom (sits between L/R % when enabled)
-    let logo_size = if show_percentage { 8.5_f32 } else { 9.5_f32 };
+    // Dygma mark in the center gap. Bars taper narrower at the bottom, so we
+    // can sit the logo a bit higher and larger without colliding with them.
+    // Numbers (no %) live under each column; logo sits above that baseline.
+    let logo_size = if show_percentage { 11.0_f32 } else { 12.0_f32 };
     let logo_cy = if show_percentage {
-        VIEW - 9.0
+        VIEW - 14.0
     } else {
-        VIEW - 7.5
+        VIEW - 10.0
     };
     draw_dygma_logo(&mut out, VIEW * 0.5, logo_cy, logo_size);
 
     if show_percentage {
         let y = VIEW - 5.0;
         out.push_str(&format!(
-            r##"<text x="{:.1}" y="{:.1}" text-anchor="middle" fill="#e4e4e7" font-family="Segoe UI,system-ui,sans-serif" font-size="9" font-weight="600">{}%</text>"##,
+            r##"<text x="{:.1}" y="{:.1}" text-anchor="middle" fill="#e4e4e7" font-family="Segoe UI,system-ui,sans-serif" font-size="9" font-weight="600">{}</text>"##,
             left_x0 + col_w / 2.0,
             y,
             levels.left.min(100)
         ));
         out.push_str(&format!(
-            r##"<text x="{:.1}" y="{:.1}" text-anchor="middle" fill="#e4e4e7" font-family="Segoe UI,system-ui,sans-serif" font-size="9" font-weight="600">{}%</text>"##,
+            r##"<text x="{:.1}" y="{:.1}" text-anchor="middle" fill="#e4e4e7" font-family="Segoe UI,system-ui,sans-serif" font-size="9" font-weight="600">{}</text>"##,
             right_x0 + col_w / 2.0,
             y,
             levels.right.min(100)
@@ -309,8 +312,11 @@ mod tests {
             right_status: Some(2),
         };
         let with_pct = render_levels_svg(&levels, true);
-        assert!(with_pct.contains("100%"));
-        assert!(with_pct.contains("40%"));
+        // Numbers only — no trailing % (avoids collision with center logo)
+        assert!(with_pct.contains(">100</text>"));
+        assert!(with_pct.contains(">40</text>"));
+        assert!(!with_pct.contains("100%"));
+        assert!(!with_pct.contains("40%"));
         assert!(with_pct.contains("#22c55e")); // left full green
         assert!(with_pct.contains("#f97316")); // right 2 blocks orange
         // charging bolt on right (status 2)
@@ -320,6 +326,7 @@ mod tests {
         assert!(with_pct.contains("#F43F27"));
 
         let no_pct = render_levels_svg(&levels, false);
+        assert!(!no_pct.contains(">100</text>"));
         assert!(!no_pct.contains("100%"));
         assert!(no_pct.contains("aria-label=\"Dygma\""));
     }
